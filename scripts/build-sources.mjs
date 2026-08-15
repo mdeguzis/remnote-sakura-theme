@@ -10,6 +10,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/**
+ * Write only when the content actually changed.
+ *
+ * webpack runs this before every compile and also watches the directory it
+ * writes into. An unconditional write means every compile dirties a watched
+ * file, which triggers the next compile: a loop that spins the CPU forever and
+ * is invisible apart from the machine getting hot. It reached fifteen thousand
+ * compiles before anyone looked.
+ *
+ * @returns {boolean} whether anything was written
+ */
+function writeIfChanged(file, contents) {
+  try {
+    if (fs.readFileSync(file, 'utf8') === contents) return false;
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+  fs.writeFileSync(file, contents, 'utf8');
+  return true;
+}
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ASSET_DIR = path.join(ROOT, 'assets');
 const CSS_DIR = path.join(ROOT, 'src', 'css');
@@ -92,21 +113,24 @@ function main() {
   const assets = readAssets();
   const css = readCss();
 
-  fs.writeFileSync(
+  const wroteAssets = writeIfChanged(
     path.join(LIB_DIR, 'assets.generated.ts'),
     `// GENERATED FILE. Do not edit.\n` +
       `// Produced by scripts/build-sources.mjs from assets/.\n\n` +
-      `export const ASSETS: Record<string, string> = ${JSON.stringify(assets, null, 2)};\n`,
-    'utf8'
+      `export const ASSETS: Record<string, string> = ${JSON.stringify(assets, null, 2)};\n`
   );
 
-  fs.writeFileSync(
+  const wroteCss = writeIfChanged(
     path.join(LIB_DIR, 'css.generated.ts'),
     `// GENERATED FILE. Do not edit.\n` +
       `// Produced by scripts/build-sources.mjs from src/css/.\n\n` +
-      `export const CSS: Record<string, string> = ${JSON.stringify(css, null, 2)};\n`,
-    'utf8'
+      `export const CSS: Record<string, string> = ${JSON.stringify(css, null, 2)};\n`
   );
+
+  if (!wroteAssets && !wroteCss) {
+    console.log('[build-sources] unchanged');
+    return;
+  }
 
   const assetBytes = Object.values(assets).reduce((sum, uri) => sum + uri.length, 0);
   const cssBytes = Object.values(css).reduce((sum, text) => sum + text.length, 0);

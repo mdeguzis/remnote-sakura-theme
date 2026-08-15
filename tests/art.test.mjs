@@ -78,6 +78,28 @@ test('encodeSvg escapes percent signs before introducing its own', () => {
   assert.match(encoded, /50%25/);
 });
 
+test('build-sources does not rewrite unchanged output', async () => {
+  // webpack runs this before every compile and watches the directory it writes
+  // into, so an unconditional write means every compile dirties a watched file
+  // and triggers the next one. That loop reached fifteen thousand compiles
+  // before it was noticed, because the only symptom is a hot machine.
+  const { execFileSync } = await import('node:child_process');
+  const script = path.join(ROOT, 'scripts/build-sources.mjs');
+  const generated = [
+    path.join(ROOT, 'src/lib/assets.generated.ts'),
+    path.join(ROOT, 'src/lib/css.generated.ts'),
+  ];
+
+  execFileSync('node', [script], { stdio: 'ignore' });
+  const before = generated.map((file) => fs.statSync(file).mtimeMs);
+
+  const output = execFileSync('node', [script], { encoding: 'utf8' });
+  const after = generated.map((file) => fs.statSync(file).mtimeMs);
+
+  assert.match(output, /unchanged/, 'second run should report nothing to do');
+  assert.deepEqual(after, before, 'second run rewrote a file that had not changed');
+});
+
 test('generating the art twice produces identical files', async () => {
   // The PRNG is seeded, so a rebuild must not churn the committed assets.
   const before = files.map((file) => fs.readFileSync(path.join(ASSET_DIR, file), 'utf8'));
