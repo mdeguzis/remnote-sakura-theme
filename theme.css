@@ -29,8 +29,8 @@
   --sakura-petal-opacity: 0.42;
   --sakura-petal-size-near: 42vh;
   --sakura-petal-size-far: 31vh;
-  --sakura-petal-duration-near: 16s;
-  --sakura-petal-duration-far: 25s;
+  --sakura-petal-duration-near: 32s;
+  --sakura-petal-duration-far: 50s;
   --sakura-code-opacity: 0.550;
 }
 

@@ -54,8 +54,19 @@ body::after {
 }
 
 /*
- * Translating by exactly one tile height means the loop point lands where the
- * pattern already repeats, so there is no visible jump.
+ * The loop has to land on a whole number of tiles in BOTH axes.
+ *
+ * A repeating mask only looks continuous where the animation ends on a multiple
+ * of the tile size. The vertical travel was already exactly one tile, but the
+ * sideways drift was an arbitrary 14vw, so every cycle the pattern snapped back
+ * horizontally and the petals appeared to teleport.
+ *
+ * Both axes are now expressed in tiles: one across and two down. That keeps the
+ * seam invisible and gives a drift of about 27 degrees from vertical, which is
+ * closer to how a petal actually falls than a straight drop would be.
+ *
+ * Anything hard coded here in vw or px reintroduces the jump, which is why a
+ * test asserts these offsets are written in terms of the tile size.
  */
 @keyframes sakura-fall-near {
   from {
@@ -63,19 +74,20 @@ body::after {
     -webkit-mask-position: 0 0;
   }
   to {
-    mask-position: 14vw var(--sakura-petal-size-near);
-    -webkit-mask-position: 14vw var(--sakura-petal-size-near);
+    mask-position: var(--sakura-petal-size-near) calc(var(--sakura-petal-size-near) * 2);
+    -webkit-mask-position: var(--sakura-petal-size-near) calc(var(--sakura-petal-size-near) * 2);
   }
 }
 
+/* The far layer drifts the other way, which is what reads as depth. */
 @keyframes sakura-fall-far {
   from {
     mask-position: 0 0;
     -webkit-mask-position: 0 0;
   }
   to {
-    mask-position: -9vw var(--sakura-petal-size-far);
-    -webkit-mask-position: -9vw var(--sakura-petal-size-far);
+    mask-position: calc(-1 * var(--sakura-petal-size-far)) calc(var(--sakura-petal-size-far) * 2);
+    -webkit-mask-position: calc(-1 * var(--sakura-petal-size-far)) calc(var(--sakura-petal-size-far) * 2);
   }
 }
 

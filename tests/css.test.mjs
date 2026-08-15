@@ -69,6 +69,27 @@ test('the petal animation respects reduced motion', () => {
   assert.match(CSS.petals, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+test('the petal loop lands on whole tiles in both axes', () => {
+  // A repeating mask only looks continuous if the animation ends on a multiple
+  // of the tile size. A hard coded offset in vw or px snaps the pattern back at
+  // the loop point and the petals visibly teleport, which is what the first
+  // version did with a 14vw sideways drift.
+  const keyframes = CSS.petals.match(/@keyframes sakura-fall-\w+\s*\{[^@]*?\n\}/g) || [];
+  assert.equal(keyframes.length, 2, 'expected two petal keyframe blocks');
+
+  for (const block of keyframes) {
+    const destinations = [...block.matchAll(/(?:^|[^-])mask-position:\s*([^;]+);/g)]
+      .map((m) => m[1].trim())
+      .filter((value) => value !== '0 0');
+
+    assert.ok(destinations.length > 0, 'no destination offset found');
+    for (const value of destinations) {
+      assert.doesNotMatch(value, /\d\s*(vw|vh|px|%)/, `hard coded offset "${value}" will break the loop`);
+      assert.match(value, /--sakura-petal-size-/, `offset "${value}" is not expressed in tiles`);
+    }
+  }
+});
+
 test('mask layers ship the webkit prefixed property too', () => {
   // Without the prefixed form the branches vanish entirely in the engines that
   // still need it, which reads as the theme being broken rather than plain.

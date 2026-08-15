@@ -59,11 +59,17 @@ export const PETAL_TILE: Record<PetalDensity, { near: string; far: string; opaci
   heavy: { near: '26vh', far: '19vh', opacity: 0.55 },
 };
 
-/** Seconds for one full tile of fall. The far layer is always slower. */
+/**
+ * Seconds for one full cycle. The far layer is always slower.
+ *
+ * A cycle covers two tiles of fall, not one, because the loop has to land on a
+ * whole number of tiles in both axes to stay seamless. These are doubled from
+ * the single tile values so the apparent speed is unchanged.
+ */
 export const PETAL_DURATION: Record<PetalSpeed, { near: number; far: number }> = {
-  slow: { near: 26, far: 41 },
-  drifting: { near: 16, far: 25 },
-  brisk: { near: 9, far: 15 },
+  slow: { near: 52, far: 82 },
+  drifting: { near: 32, far: 50 },
+  brisk: { near: 18, far: 30 },
 };
 
 export const TREE_MODES: TreeMode[] = ['off', 'subtle', 'normal', 'bold'];
