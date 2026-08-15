@@ -13,7 +13,6 @@ import { normalizeOptions, type PetalDensity, type PetalSpeed, type SakuraOption
  * whenever a default has to reach existing installs.
  */
 export const SETTINGS = {
-  useDefaults: 'use-defaults',
   shade: 'shade',
   trees: 'trees',
   scenery: 'scenery',
@@ -32,7 +31,6 @@ export const SETTINGS = {
  */
 export async function readOptions(plugin: RNPlugin): Promise<SakuraOptions> {
   return normalizeOptions({
-    useDefaults: await plugin.settings.getSetting<boolean>(SETTINGS.useDefaults),
     shade: await plugin.settings.getSetting<string>(SETTINGS.shade),
     trees: await plugin.settings.getSetting<TreeMode>(SETTINGS.trees),
     scenery: await plugin.settings.getSetting<boolean>(SETTINGS.scenery),

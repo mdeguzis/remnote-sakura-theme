@@ -3,6 +3,20 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-08-15
+
+### Removed
+
+- The Use defaults switch. It was added as a stand-in for a reset button, but
+  RemNote's API cannot write a setting, so it could only ignore stored values
+  rather than restore them. A control whose name promises more than it does is
+  worse than no control, and the settings panel is better without it.
+
+  To get the defaults back, change the settings by hand, or reinstall the plugin
+  so the stored values are gone and the defaults apply again.
+
+Minor rather than patch because it changes the settings surface.
+
 ## [1.0.0] - 2026-08-15
 
 First stable release. Every version from here bumps on any change that ships,
@@ -13,8 +27,6 @@ version alone.
 
 - Panel opacity setting, driving `--current-background-color`, which is what
   RemNote actually paints code blocks and the editor container with
-- Use defaults setting at the top of the panel. RemNote's API cannot write a
-  setting, so this ignores stored values rather than erasing them
 - Show debug info command, opening a copyable report of the options in effect
   and the CSS variables actually emitted
 - Show current settings and Copy debug info commands in the omnibar

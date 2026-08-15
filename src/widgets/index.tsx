@@ -50,14 +50,6 @@ async function onActivate(plugin: ReactRNPlugin) {
 }
 
 async function registerEverything(plugin: ReactRNPlugin) {
-  await plugin.settings.registerBooleanSetting({
-    id: SETTINGS.useDefaults,
-    title: 'Use defaults',
-    description:
-      'Ignore every setting below and use the defaults. RemNote does not let a plugin write a setting, so this ignores your values rather than erasing them. Turn it back off to get them again.',
-    defaultValue: DEFAULT_OPTIONS.useDefaults,
-  });
-
   await plugin.settings.registerDropdownSetting({
     id: SETTINGS.shade,
     title: 'Shade',
@@ -130,7 +122,6 @@ async function registerEverything(plugin: ReactRNPlugin) {
     await reactivePlugin.app.registerCSS(CSS_KEY, css);
 
     console.debug(`${LOG_PREFIX} applied stylesheet`, {
-      useDefaults: options.useDefaults,
       shade: options.shade,
       trees: options.trees,
       scenery: options.scenery,

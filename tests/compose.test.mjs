@@ -162,7 +162,6 @@ test('normalizeOptions handles null and undefined', () => {
 
 test('normalizeOptions keeps valid values untouched', () => {
   const input = {
-    useDefaults: false,
     shade: 'yozakura',
     trees: 'bold',
     scenery: false,
@@ -224,41 +223,6 @@ test('the blur is tied to the fill', () => {
 test('the extremes of the code opacity setting both work', () => {
   assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 0 }), /--sakura-code-opacity: 0\.000/);
   assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 100 }), /--sakura-code-opacity: 1\.000/);
-});
-
-// --- use defaults --------------------------------------------------------
-
-test('use defaults ignores every other stored setting', () => {
-  // RemNote's API cannot write a setting, so a real reset is impossible. This
-  // ignores the stored values instead of erasing them.
-  const out = normalizeOptions({
-    useDefaults: true,
-    shade: 'yozakura',
-    trees: 'off',
-    scenery: false,
-    codeOpacity: 3,
-    petals: true,
-  });
-
-  assert.equal(out.shade, DEFAULT_OPTIONS.shade);
-  assert.equal(out.trees, DEFAULT_OPTIONS.trees);
-  assert.equal(out.scenery, DEFAULT_OPTIONS.scenery);
-  assert.equal(out.codeOpacity, DEFAULT_OPTIONS.codeOpacity);
-  assert.equal(out.petals, DEFAULT_OPTIONS.petals);
-  assert.equal(out.useDefaults, true, 'the flag itself stays on');
-});
-
-test('turning use defaults off gives the stored settings back', () => {
-  // Not erasing is the point: the values are still there to return to.
-  const stored = { useDefaults: false, shade: 'yozakura', trees: 'off', codeOpacity: 3 };
-  const out = normalizeOptions(stored);
-  assert.equal(out.shade, 'yozakura');
-  assert.equal(out.trees, 'off');
-  assert.equal(out.codeOpacity, 3);
-});
-
-test('use defaults is off by default', () => {
-  assert.equal(DEFAULT_OPTIONS.useDefaults, false);
 });
 
 test('the panel default is 75', () => {

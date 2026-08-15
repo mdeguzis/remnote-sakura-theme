@@ -5,16 +5,6 @@ export type PetalDensity = 'sparse' | 'gentle' | 'heavy';
 export type PetalSpeed = 'slow' | 'drifting' | 'brisk';
 
 export interface SakuraOptions {
-  /**
-   * Ignore every other setting and use the defaults.
-   *
-   * A real reset button is not possible: RemNote's plugin API exposes
-   * `getSetting` and nothing that writes one, so a plugin cannot put a stored
-   * setting back to its default. This does the next best thing by ignoring the
-   * stored values rather than clearing them, which also means turning it off
-   * gives you your own settings back instead of losing them.
-   */
-  useDefaults: boolean;
   shade: string;
   trees: TreeMode;
   /** The corner shop with the cat. Rides on the branch layers. */
@@ -43,7 +33,6 @@ export interface SakuraOptions {
  * day and gets a plugin uninstalled on the third, so it is opt in.
  */
 export const DEFAULT_OPTIONS: SakuraOptions = {
-  useDefaults: false,
   shade: 'hanami',
   trees: 'bold',
   scenery: true,
@@ -114,13 +103,7 @@ export function normalizeOptions(raw: Partial<SakuraOptions> | null | undefined)
   const pick = <T extends string>(value: unknown, allowed: T[], fallback: T): T =>
     allowed.includes(value as T) ? (value as T) : fallback;
 
-  // Everything below is deliberately skipped when this is on.
-  if (input.useDefaults === true) {
-    return { ...DEFAULT_OPTIONS, useDefaults: true };
-  }
-
   return {
-    useDefaults: false,
     shade: typeof input.shade === 'string' ? input.shade : DEFAULT_OPTIONS.shade,
     trees: pick(input.trees, TREE_MODES, DEFAULT_OPTIONS.trees),
     scenery: typeof input.scenery === 'boolean' ? input.scenery : DEFAULT_OPTIONS.scenery,
