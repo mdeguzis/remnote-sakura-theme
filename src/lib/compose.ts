@@ -80,7 +80,20 @@ export function compose(rawOptions: Partial<SakuraOptions>): string {
   --sakura-petal-duration-far: ${duration.far}s;
 }`);
 
-  parts.push(`html.dark {\n${paletteVars(shade.dark)}\n}`);
+  // Dark mode has to land on the ROOT element, not on whichever element
+  // RemNote happens to put its `dark` class on.
+  //
+  // Two selectors because RemNote's own docs demonstrate dark mode as
+  // `.dark div { ... }`, a descendant selector, which means the class may sit
+  // on a wrapper rather than on <html>. If it does, `html.dark` never matches
+  // and every surface silently keeps the light palette.
+  //
+  // `html:has(.dark)` covers the wrapper case, and it has to hoist the values
+  // to the root rather than styling the wrapper: custom properties declared on
+  // a nested element cannot reach `html::before`, which is where the branches
+  // are drawn. Declaring them on html means the pseudo-elements get them and
+  // everything below inherits them.
+  parts.push(`html.dark,\nhtml:has(.dark) {\n${paletteVars(shade.dark)}\n}`);
 
   parts.push(CSS.base);
 

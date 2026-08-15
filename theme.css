@@ -31,7 +31,8 @@
   --sakura-petal-duration-far: 25s;
 }
 
-html.dark {
+html.dark,
+html:has(.dark) {
   --sakura-bg-top: 28, 22, 30;
   --sakura-bg-bottom: 22, 17, 25;
   --sakura-surface: 35, 27, 38;

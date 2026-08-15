@@ -63,12 +63,29 @@ test('composed css never contains undefined or NaN', () => {
 test('both palettes are emitted, with dark gated on RemNote dark class', () => {
   const css = compose(DEFAULT_OPTIONS);
   assert.match(css, /^:root \{/m);
-  assert.match(css, /html\.dark \{/);
+  assert.match(css, /html\.dark/);
+});
+
+test('dark mode matches whether the dark class is on html or on a wrapper', () => {
+  // RemNote documents dark mode as ".dark div { ... }", a descendant selector,
+  // so the class may not be on <html> at all. Matching only html.dark left every
+  // surface on the light palette in the real app.
+  const css = compose(DEFAULT_OPTIONS);
+  assert.match(css, /html\.dark,\s*\n?html:has\(\.dark\)/);
+});
+
+test('the dark palette is declared on the root element', () => {
+  // Not on the wrapper: custom properties on a nested element cannot reach
+  // html::before, which is where the branches are drawn.
+  const darkBlock = /html\.dark,\s*\n?html:has\(\.dark\) \{([^}]*)\}/.exec(compose(DEFAULT_OPTIONS));
+  assert.ok(darkBlock, 'no dark block found');
+  assert.match(darkBlock[1], /--sakura-wood:/, 'dark block does not set the artwork colors');
+  assert.match(darkBlock[1], /--sakura-bg-top:/);
 });
 
 test('the dark block comes after the light block so it wins', () => {
   const css = compose(DEFAULT_OPTIONS);
-  assert.ok(css.indexOf(':root {') < css.indexOf('html.dark {'));
+  assert.ok(css.indexOf(':root {') < css.indexOf('html.dark'));
 });
 
 test('an unknown shade falls back to the default rather than throwing', () => {
