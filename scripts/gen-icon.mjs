@@ -22,7 +22,7 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 // Deliberately NOT in assets/: everything there is inlined into the theme CSS
 // as a mask data URI, and the icon is neither a mask nor part of the stylesheet.
 const SVG_PATH = path.join(ROOT, 'assets', 'icon', 'logo.svg');
-const PNG_PATH = path.join(PUBLIC_DIR, 'logo.png');
+const PNG_PATH = path.join(ROOT, 'logo.png');
 
 const SIZE = 512;
 
@@ -169,12 +169,12 @@ function main() {
 
   try {
     execFileSync('rsvg-convert', ['-w', '512', '-h', '512', SVG_PATH, '-o', PNG_PATH], { stdio: 'pipe' });
-    console.log(`[gen-icon] public/logo.png ${fs.statSync(PNG_PATH).size} bytes`);
+    console.log(`[gen-icon] logo.png ${fs.statSync(PNG_PATH).size} bytes`);
   } catch (err) {
     // Not fatal: the SVG is the source and CI does not need the raster.
     console.warn(
       `[gen-icon] could not rasterize (${err.code === 'ENOENT' ? 'rsvg-convert not installed' : err.message}). ` +
-        `public/logo.png was not refreshed.`
+        `logo.png was not refreshed.`
     );
   }
 }

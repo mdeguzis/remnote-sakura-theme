@@ -5,7 +5,7 @@
   "license": "MIT",
   "description": "Cherry blossom theme for RemNote. Branches behind a translucent interface, with optional falling petals.",
   "scripts": {
-    "clean": "shx rm -rf build dist PluginZip.zip src/lib/assets.generated.ts src/lib/css.generated.ts",
+    "clean": "shx rm -rf build dist *.zip src/lib/assets.generated.ts src/lib/css.generated.ts",
     "art": "node scripts/gen-art.mjs && node scripts/gen-icon.mjs",
     "sources": "node scripts/build-sources.mjs",
     "dev": "npm run sources && cross-env NODE_ENV=development webpack serve --color --progress",
@@ -19,10 +19,11 @@
     "check-types": "npm run sources && tsc",
     "verify": "npm run check-types && npm test",
     "pre-push": "npm run verify",
-    "build:theme": "npm run sources && node scripts/build-theme.mjs && cd build/theme && bestzip ../../SakuraTheme.zip ./*",
-    "build:plugin": "npm run sources && npx remnote-plugin validate && shx rm -rf dist && cross-env NODE_ENV=production webpack --color && shx cp README.md dist && cd dist && bestzip ../SakuraPlugin.zip ./*",
+    "build:theme": "npm run sources && node scripts/build-theme.mjs && shx rm -f SakuraTheme.zip && bestzip SakuraTheme.zip theme.css manifest.json README.md logo.png",
+    "build:plugin": "npm run sources && npx remnote-plugin validate && shx rm -rf dist && shx rm -f SakuraPlugin.zip && cross-env NODE_ENV=production webpack --color && shx cp README.md dist && cd dist && bestzip ../SakuraPlugin.zip ./*",
     "build": "npm run build:theme && npm run build:plugin",
-    "art:icon": "node scripts/gen-icon.mjs"
+    "art:icon": "node scripts/gen-icon.mjs",
+    "css:copy": "npm run sources --silent && node scripts/copy-css.mjs"
   },
   "dependencies": {
     "@remnote/plugin-sdk": "^0.0.46",

@@ -32,7 +32,14 @@ jobs:
       - name: Artwork is up to date
         run: |
           npm run art
-          git diff --exit-code -- assets/ public/logo.png
+          git diff --exit-code -- assets/ logo.png
+
+      # theme.css and manifest.json are committed so the repo is itself a
+      # valid RemNote theme. Regenerating must not change them.
+      - name: Theme output is up to date
+        run: |
+          node scripts/build-theme.mjs
+          git diff --exit-code -- theme.css manifest.json
 
       - name: Build both zips
         run: npm run build

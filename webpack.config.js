@@ -87,6 +87,7 @@ const config = {
       patterns: [
         { from: 'public', to: '' },
         { from: 'README.md', to: '' },
+        { from: 'logo.png', to: '' },
       ],
     }),
   ].filter(Boolean),

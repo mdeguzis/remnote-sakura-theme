@@ -9,6 +9,15 @@
  * way to offer a switch.
  *
  * Anyone who wants the switches installs the plugin build instead.
+ *
+ * Output goes to the REPO ROOT rather than a build directory, matching the
+ * layout of remnoteio/remnote-theme-template: a RemNote theme is `theme.css`
+ * plus `manifest.json` sitting at the top of the repository. Keeping that shape
+ * means this repo is itself a valid theme that can be zipped and uploaded
+ * directly, which is what someone cloning it will expect.
+ *
+ * Both files are generated and committed. CI regenerates them and fails on any
+ * diff, so the committed copy can never drift from the CSS sources.
  */
 
 import fs from 'node:fs';
@@ -20,7 +29,7 @@ import { DEFAULT_OPTIONS } from '../src/lib/options.ts';
 import { SHADES } from '../src/lib/palettes.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = path.join(ROOT, 'build', 'theme');
+const OUT = ROOT;
 
 /** The shade the static theme ships. */
 const THEME_SHADE = process.env.SAKURA_SHADE || DEFAULT_OPTIONS.shade;
@@ -58,16 +67,12 @@ function main() {
     requiredScopes: [],
   };
 
-  fs.rmSync(OUT, { recursive: true, force: true });
-  fs.mkdirSync(OUT, { recursive: true });
-
+  // No rmSync here: OUT is the repository root.
   fs.writeFileSync(path.join(OUT, 'theme.css'), css, 'utf8');
   fs.writeFileSync(path.join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf8');
-  fs.copyFileSync(path.join(ROOT, 'README.md'), path.join(OUT, 'README.md'));
-  fs.copyFileSync(path.join(ROOT, 'public', 'logo.png'), path.join(OUT, 'logo.png'));
 
   console.log(
-    `[build-theme] shade=${shade.id} css=${Buffer.byteLength(css, 'utf8')} bytes -> ${path.relative(ROOT, OUT)}`
+    `[build-theme] shade=${shade.id} css=${Buffer.byteLength(css, 'utf8')} bytes -> theme.css + manifest.json`
   );
 }
 
