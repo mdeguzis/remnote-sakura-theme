@@ -225,6 +225,30 @@ html {
   border: 1px solid rgba(var(--sakura-border), 0.5);
 }
 
+/*
+ * The container, whatever RemNote called it.
+ *
+ * Setting the opacity to 0 left the block just as filled as before, which means
+ * the fill was never coming from the rules above. The likely source is the
+ * elevation utilities: those are painted at 0.94 for menus and dialogs, and if
+ * the code block's wrapper carries one of those classes it takes that fill and
+ * ignores everything aimed at .rn-code-node.
+ *
+ * Rather than guess the wrapper's name, this matches any elevation surface that
+ * CONTAINS code. :has() is what makes that possible, and Electron 36 supports
+ * it. If RemNote uses neither an elevation class nor a recognisable code child,
+ * this still misses and the real class has to come from the CSS Selector
+ * Helper.
+ */
+[class*='rn-clr-background-elevation']:has(> pre),
+[class*='rn-clr-background-elevation']:has(> code),
+[class*='rn-clr-background-elevation']:has(.cm-editor),
+[class*='rn-clr-background-elevation']:has(.rn-code-node),
+[class*='rn-clr-background-elevation']:has([class*='language-']) {
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
+  backdrop-filter: var(--sakura-code-blur);
+}
+
 /* Inline code is small and sits mid sentence, so it keeps more of a fill to
  * stay distinguishable from the prose around it. */
 .rn-editor :not(pre) > code {

@@ -174,6 +174,48 @@ async function registerEverything(plugin: ReactRNPlugin) {
   });
 
   await plugin.app.registerCommand({
+    id: 'sakura-copy-debug',
+    name: 'Sakura: Copy debug info',
+    description: 'Put a full diagnostic on the clipboard, for pasting into a bug report',
+    action: async () => {
+      const options = await readOptions(plugin);
+      const css = compose(options);
+
+      // The rules most likely to be wrong when the theme does not match the
+      // settings, pulled out so a report shows what was actually emitted
+      // rather than what the source says should have been.
+      const codeVars = (css.match(/--sakura-code-[\w-]+: [^;]+;/g) || []).join('\n  ');
+
+      const report = [
+        '--- sakura debug ---',
+        `options: ${JSON.stringify(options)}`,
+        `css bytes: ${css.length}`,
+        `layers: trees=${options.trees !== 'off' || options.scenery} petals=${options.petals}`,
+        'code block vars:',
+        `  ${codeVars || '(none emitted)'}`,
+        `ua: ${typeof navigator === 'undefined' ? 'unknown' : navigator.userAgent}`,
+        '--- end ---',
+      ].join('\n');
+
+      // The plugin runs in a sandboxed iframe, where the clipboard API is often
+      // unavailable. The console always works, so it is the fallback rather
+      // than the afterthought.
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(report);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+
+      console.debug(`${LOG_PREFIX} debug report\n${report}`);
+      await plugin.app.toast(
+        copied ? 'Sakura debug info copied' : 'Sakura debug info written to the developer console'
+      );
+    },
+  });
+
+  await plugin.app.registerCommand({
     id: 'sakura-show-settings',
     name: 'Sakura: Show current settings',
     description: 'Report the values actually in use, for when the theme does not look like the settings say it should',
