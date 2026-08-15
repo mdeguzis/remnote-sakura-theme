@@ -1,0 +1,7 @@
+/*
+ * Intentionally empty.
+ *
+ * RemNote probes every plugin for /snippet.css on load. All theme CSS is
+ * applied through plugin.app.registerCSS instead, because a static snippet
+ * cannot change when the user picks a different shade.
+ */

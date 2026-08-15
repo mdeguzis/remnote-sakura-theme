@@ -1,0 +1,93 @@
+/*
+ * Falling petals. Off by default.
+ *
+ * Two drifting layers on body's pseudo-elements. Each layer is one tileable
+ * petal SVG used as a mask, so the petals take their color from CSS like the
+ * branches do.
+ *
+ * The movement is a single background-position animation rather than one
+ * element per petal, because a theme cannot create DOM nodes. That turns out to
+ * be the better trick anyway: two composited layers instead of forty elements.
+ *
+ * The two layers run at different sizes and speeds, which is what produces the
+ * depth. Both drift sideways as they fall, since petals do not drop straight
+ * down.
+ *
+ * These sit ABOVE the interface at a low z-index with pointer-events: none.
+ * Petals passing in front of text is the effect; blocking a click is not, and
+ * pointer-events makes that impossible.
+ */
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: -12vh 0 -12vh 0;
+  pointer-events: none;
+  z-index: 40;
+  mask-mode: alpha;
+  mask-repeat: repeat;
+  -webkit-mask-repeat: repeat;
+  will-change: mask-position, -webkit-mask-position;
+}
+
+/* Near layer: larger, faster, more opaque. */
+body::before {
+  background-color: rgb(var(--sakura-petal));
+  opacity: calc(var(--sakura-petal-opacity) * 1);
+  mask-image: var(--sakura-petals-near);
+  -webkit-mask-image: var(--sakura-petals-near);
+  mask-size: var(--sakura-petal-size-near);
+  -webkit-mask-size: var(--sakura-petal-size-near);
+  animation: sakura-fall-near var(--sakura-petal-duration-near) linear infinite;
+}
+
+/* Far layer: smaller, slower, fainter, drifting the other way. */
+body::after {
+  background-color: rgb(var(--sakura-petal));
+  opacity: calc(var(--sakura-petal-opacity) * 0.62);
+  mask-image: var(--sakura-petals-far);
+  -webkit-mask-image: var(--sakura-petals-far);
+  mask-size: var(--sakura-petal-size-far);
+  -webkit-mask-size: var(--sakura-petal-size-far);
+  animation: sakura-fall-far var(--sakura-petal-duration-far) linear infinite;
+}
+
+/*
+ * Translating by exactly one tile height means the loop point lands where the
+ * pattern already repeats, so there is no visible jump.
+ */
+@keyframes sakura-fall-near {
+  from {
+    mask-position: 0 0;
+    -webkit-mask-position: 0 0;
+  }
+  to {
+    mask-position: 14vw var(--sakura-petal-size-near);
+    -webkit-mask-position: 14vw var(--sakura-petal-size-near);
+  }
+}
+
+@keyframes sakura-fall-far {
+  from {
+    mask-position: 0 0;
+    -webkit-mask-position: 0 0;
+  }
+  to {
+    mask-position: -9vw var(--sakura-petal-size-far);
+    -webkit-mask-position: -9vw var(--sakura-petal-size-far);
+  }
+}
+
+/*
+ * Respect the system setting. Drifting petals are exactly the kind of
+ * continuous background motion this preference exists to stop, so honour it
+ * even though the user opted in: the OS level choice is the stronger signal.
+ * The petals stay visible, they just hold still.
+ */
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after {
+    animation: none;
+  }
+}

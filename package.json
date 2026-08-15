@@ -1,0 +1,48 @@
+{
+  "private": true,
+  "name": "remnote-sakura-theme",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Cherry blossom theme for RemNote. Branches behind a translucent interface, with optional falling petals.",
+  "scripts": {
+    "clean": "shx rm -rf build dist PluginZip.zip src/lib/assets.generated.ts src/lib/css.generated.ts",
+    "art": "node scripts/gen-art.mjs && node scripts/gen-icon.mjs",
+    "sources": "node scripts/build-sources.mjs",
+    "dev": "npm run sources && cross-env NODE_ENV=development webpack serve --color --progress",
+    "dev:lan": "npm run sources && cross-env NODE_ENV=development HOST=0.0.0.0 webpack serve --color --progress",
+    "preview": "npm run sources && node scripts/preview.mjs",
+    "test": "npm run sources && node --test tests/*.test.mjs",
+    "test:watch": "npm run sources && node --test --watch tests/*.test.mjs",
+    "test:compose": "npm run sources && node --test tests/compose.test.mjs",
+    "test:css": "npm run sources && node --test tests/css.test.mjs",
+    "test:art": "node --test tests/art.test.mjs",
+    "check-types": "npm run sources && tsc",
+    "verify": "npm run check-types && npm test",
+    "pre-push": "npm run verify",
+    "build:theme": "npm run sources && node scripts/build-theme.mjs && cd build/theme && bestzip ../../SakuraTheme.zip ./*",
+    "build:plugin": "npm run sources && npx remnote-plugin validate && shx rm -rf dist && cross-env NODE_ENV=production webpack --color && shx cp README.md dist && cd dist && bestzip ../SakuraPlugin.zip ./*",
+    "build": "npm run build:theme && npm run build:plugin",
+    "art:icon": "node scripts/gen-icon.mjs"
+  },
+  "dependencies": {
+    "@remnote/plugin-sdk": "^0.0.46",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2",
+    "bestzip": "^2.2.1",
+    "copy-webpack-plugin": "^14.0.0",
+    "cross-env": "^7.0.3",
+    "esbuild-loader": "^4.3.0",
+    "glob": "^11.0.3",
+    "html-webpack-plugin": "^5.6.3",
+    "shx": "^0.3.4",
+    "typescript": "^5.6.3",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^7.2.2",
+    "webpack-dev-server": "^6.0.0"
+  }
+}

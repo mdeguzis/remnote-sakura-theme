@@ -1,0 +1,172 @@
+/*
+ * Surfaces.
+ *
+ * RemNote ships its palette as utility classes rather than CSS variables, so a
+ * theme repaints the app by redefining those classes. See
+ * https://plugins.remnote.com/custom-css for the class list.
+ *
+ * The whole point of this theme is that branches sit behind the interface, so
+ * nearly every surface is drawn at partial alpha. The alpha values are not
+ * arbitrary:
+ *
+ *   page level surfaces   0.62 - 0.78   the branches read clearly through these
+ *   floating surfaces     0.94 - 0.97   menus and dialogs must stay legible
+ *                                       when they overlap a dense blossom
+ *   text                  fully opaque  never traded away for the effect
+ *
+ * Anything that overlaps arbitrary content underneath it also gets a backdrop
+ * blur, so a popup over a branch reads as frosted glass rather than as mud.
+ */
+
+html {
+  background-color: rgb(var(--sakura-bg-bottom));
+  background-image: linear-gradient(170deg, rgb(var(--sakura-bg-top)) 0%, rgb(var(--sakura-bg-bottom)) 62%);
+  background-attachment: fixed;
+}
+
+/* Page level. Translucent so the branch layers behind them show through. */
+.rn-clr-background-primary {
+  background-color: rgba(var(--sakura-bg-top), 0.62);
+}
+.rn-clr-background-secondary {
+  background-color: rgba(var(--sakura-surface), 0.7);
+}
+.rn-clr-background-tertiary {
+  background-color: rgba(var(--sakura-surface), 0.78);
+}
+
+/* Floating. Kept close to opaque: legibility beats the effect here. */
+.rn-clr-background-elevation-5,
+.rn-clr-background-elevation-10,
+.rn-clr-background-elevation-15,
+.rn-clr-background-elevation-20,
+.rn-clr-background-elevation-30,
+.rn-clr-background-elevation-40,
+.rn-clr-background-elevation-50 {
+  background-color: rgba(var(--sakura-elevated), 0.94);
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+.rn-clr-background-accent {
+  background-color: rgb(var(--sakura-accent));
+}
+.rn-clr-background-light-accent {
+  background-color: rgba(var(--sakura-accent-soft), 0.85);
+}
+
+/* Text stays fully opaque at every level. */
+.rn-clr-content-primary {
+  color: rgb(var(--sakura-text));
+}
+.rn-clr-content-secondary,
+.rn-clr-content-tertiary {
+  color: rgb(var(--sakura-text-muted));
+}
+.rn-clr-content-accent {
+  color: rgb(var(--sakura-accent));
+}
+.rn-clr-content-on-color {
+  color: rgb(var(--sakura-elevated));
+}
+
+.rn-clr-border-opaque {
+  border-color: rgba(var(--sakura-border), 0.8);
+}
+.rn-clr-border-selected,
+.rn-clr-border-accent {
+  border-color: rgb(var(--sakura-accent));
+}
+
+/*
+ * Structure.
+ *
+ * The editor column itself is left almost clear. It is the largest area on
+ * screen, so any tint here is what decides whether the theme feels like spring
+ * light or like a filter someone left on.
+ */
+.rn-editor,
+.rn-document,
+.rn-document-wrapper {
+  background-color: transparent;
+}
+
+.rn-sidebar,
+.rn-document-sidebar,
+.rn-left-sidebar {
+  background-color: rgba(var(--sakura-surface), 0.66);
+  backdrop-filter: blur(6px);
+}
+
+.rn-doc-title {
+  color: rgb(var(--sakura-text));
+  letter-spacing: -0.015em;
+}
+
+.rn-editor-divider,
+.rn-divider {
+  background-color: rgba(var(--sakura-border), 0.7);
+}
+
+/* Dialogs, menus and the omnibar sit over everything, so they get the most
+ * opacity and the strongest blur. */
+.rn-dialog,
+.rn-doc-menu,
+.rn-omnibar,
+.rn-settings,
+.rn-floating-toolbar {
+  background-color: rgba(var(--sakura-elevated), 0.96);
+  backdrop-filter: blur(14px) saturate(125%);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(var(--sakura-wood), 0.16);
+}
+
+.rn-dialog-overlay,
+.rn-dialog-background {
+  background-color: rgba(var(--sakura-bg-bottom), 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.rn-card,
+.rn-document-preview {
+  background-color: rgba(var(--sakura-elevated), 0.9);
+  border-radius: 12px;
+}
+
+.rn-button {
+  border-radius: 10px;
+}
+
+/* Petals are round, so the interface is too. */
+.rn-checkbox {
+  border-radius: 6px;
+}
+
+/* Selection picks up the blossom color rather than the browser default blue,
+ * which otherwise fights every shade. */
+::selection {
+  background-color: rgba(var(--sakura-accent), 0.28);
+}
+
+.rn-tag-container {
+  background-color: rgba(var(--sakura-accent-soft), 0.7);
+  border-radius: 999px;
+}
+
+/* Scrollbars are a small thing that gives away an unfinished theme. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--sakura-accent), 0.3);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(var(--sakura-accent), 0.5);
+  background-clip: content-box;
+}

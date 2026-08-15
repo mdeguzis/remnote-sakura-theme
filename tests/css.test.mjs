@@ -1,0 +1,114 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+import { compose } from '../src/lib/compose.ts';
+import { DEFAULT_OPTIONS } from '../src/lib/options.ts';
+import { CSS } from '../src/lib/css.generated.ts';
+import { ASSETS } from '../src/lib/assets.generated.ts';
+
+/** The full stylesheet, everything switched on. */
+const FULL = compose({ ...DEFAULT_OPTIONS, trees: 'bold', petals: true });
+
+/** Custom properties the stylesheet reads. */
+function referencedVars(css) {
+  const names = new Set();
+  const re = /var\(\s*(--sakura-[\w-]+)/g;
+  let match;
+  while ((match = re.exec(css)) !== null) names.add(match[1]);
+  return names;
+}
+
+/** Custom properties the stylesheet declares. */
+function declaredVars(css) {
+  const names = new Set();
+  const re = /^\s*(--sakura-[\w-]+)\s*:/gm;
+  let match;
+  while ((match = re.exec(css)) !== null) names.add(match[1]);
+  return names;
+}
+
+test('every variable the css reads is also declared', () => {
+  // This is the failure this theme is most prone to: a typo in a var name makes
+  // one surface silently fall back to RemNote's own color, with no error
+  // anywhere, and it is easy to miss on a surface you did not happen to open.
+  const missing = [...referencedVars(FULL)].filter((name) => !declaredVars(FULL).has(name));
+  assert.deepEqual(missing, [], `undeclared custom properties: ${missing.join(', ')}`);
+});
+
+test('no declared variable goes unused', () => {
+  const unused = [...declaredVars(FULL)].filter((name) => !referencedVars(FULL).has(name));
+  assert.deepEqual(unused, [], `declared but never used: ${unused.join(', ')}`);
+});
+
+test('braces balance in every fragment', () => {
+  for (const [name, css] of Object.entries(CSS)) {
+    const open = (css.match(/\{/g) || []).length;
+    const close = (css.match(/\}/g) || []).length;
+    assert.equal(open, close, `${name}.css has unbalanced braces`);
+  }
+});
+
+test('braces balance in the composed stylesheet', () => {
+  assert.equal((FULL.match(/\{/g) || []).length, (FULL.match(/\}/g) || []).length);
+});
+
+test('the decorative layers can never intercept input', () => {
+  // Full viewport fixed elements sit over the interface. Without
+  // pointer-events: none they would swallow every click in the app.
+  for (const name of ['trees', 'petals']) {
+    const rules = CSS[name].split('}');
+    const positioned = rules.filter((rule) => /position:\s*fixed/.test(rule));
+    assert.ok(positioned.length > 0, `${name}.css declares no fixed layer`);
+    for (const rule of positioned) {
+      assert.match(rule, /pointer-events:\s*none/, `${name}.css has a fixed layer without pointer-events: none`);
+    }
+  }
+});
+
+test('the petal animation respects reduced motion', () => {
+  assert.match(CSS.petals, /@media \(prefers-reduced-motion: reduce\)/);
+});
+
+test('mask layers ship the webkit prefixed property too', () => {
+  // Without the prefixed form the branches vanish entirely in the engines that
+  // still need it, which reads as the theme being broken rather than plain.
+  for (const name of ['trees', 'petals']) {
+    const maskImages = (CSS[name].match(/[^-]mask-image:/g) || []).length;
+    const webkitMaskImages = (CSS[name].match(/-webkit-mask-image:/g) || []).length;
+    assert.equal(maskImages, webkitMaskImages, `${name}.css prefixed mask-image count does not match`);
+  }
+});
+
+test('text colors are fully opaque', () => {
+  // Backgrounds are translucent on purpose. Text never is.
+  const contentRules = CSS.base.split('}').filter((rule) => /\.rn-clr-content-/.test(rule));
+  assert.ok(contentRules.length > 0);
+  for (const rule of contentRules) {
+    assert.doesNotMatch(rule, /color:\s*rgba\(/, `text color uses rgba: ${rule.trim().slice(0, 80)}`);
+  }
+});
+
+test('assets are inlined as svg data uris', () => {
+  assert.ok(Object.keys(ASSETS).length >= 8);
+  for (const [name, uri] of Object.entries(ASSETS)) {
+    assert.match(uri, /^data:image\/svg\+xml;charset=utf-8,/, `${name} is not an svg data uri`);
+    assert.doesNotMatch(uri, /[<>"]/, `${name} contains characters that break a css url() value`);
+    assert.doesNotMatch(uri, /\{\{/, `${name} still contains a placeholder`);
+  }
+});
+
+test('the composed stylesheet stays within a sane size', () => {
+  // The artwork dominates. If this jumps, a branch got denser than intended.
+  const kb = Buffer.byteLength(FULL, 'utf8') / 1024;
+  assert.ok(kb < 80, `composed stylesheet is ${kb.toFixed(0)} KB, over the 80 KB budget`);
+});
+
+test('no remote url survives into the stylesheet', () => {
+  // Everything must be self contained: a remote request would leak that the
+  // user has this theme on, and would break offline.
+  const urls = [...FULL.matchAll(/url\(\s*["']?([^"')]+)/g)].map((m) => m[1]);
+  assert.ok(urls.length > 0);
+  for (const url of urls) {
+    assert.match(url, /^data:/, `non data url in stylesheet: ${url.slice(0, 60)}`);
+  }
+});

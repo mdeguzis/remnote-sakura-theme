@@ -1,0 +1,154 @@
+import { declareIndexPlugin, ReactRNPlugin } from '@remnote/plugin-sdk';
+
+import { compose } from '../lib/compose.ts';
+import { SHADES } from '../lib/palettes.ts';
+import {
+  DEFAULT_OPTIONS,
+  PETAL_DENSITIES,
+  PETAL_SPEEDS,
+  TREE_MODES,
+  normalizeOptions,
+  type PetalDensity,
+  type PetalSpeed,
+  type TreeMode,
+} from '../lib/options.ts';
+
+const LOG_PREFIX = '[sakura]';
+
+/** The registerCSS id this plugin owns. Re-registering it replaces the sheet. */
+const CSS_KEY = 'sakura-theme';
+
+const SETTINGS = {
+  shade: 'shade',
+  trees: 'trees',
+  petals: 'petals',
+  petalDensity: 'petal-density',
+  petalSpeed: 'petal-speed',
+} as const;
+
+const TREE_LABELS: Record<TreeMode, string> = {
+  off: 'Off',
+  subtle: 'Subtle',
+  normal: 'Normal',
+  bold: 'Bold',
+};
+
+const DENSITY_LABELS: Record<PetalDensity, string> = {
+  sparse: 'Sparse',
+  gentle: 'Gentle',
+  heavy: 'Heavy',
+};
+
+const SPEED_LABELS: Record<PetalSpeed, string> = {
+  slow: 'Slow',
+  drifting: 'Drifting',
+  brisk: 'Brisk',
+};
+
+async function onActivate(plugin: ReactRNPlugin) {
+  await plugin.settings.registerDropdownSetting({
+    id: SETTINGS.shade,
+    title: 'Shade',
+    description: 'Which sakura palette to use. Each one carries its own light and dark mode.',
+    defaultValue: DEFAULT_OPTIONS.shade,
+    options: SHADES.map((shade) => ({
+      key: shade.id,
+      label: `${shade.name} - ${shade.description}`,
+      value: shade.id,
+    })),
+  });
+
+  await plugin.settings.registerDropdownSetting({
+    id: SETTINGS.trees,
+    title: 'Blossom branches',
+    description: 'How strongly the cherry branches show behind the interface.',
+    defaultValue: DEFAULT_OPTIONS.trees,
+    options: TREE_MODES.map((mode) => ({ key: mode, label: TREE_LABELS[mode], value: mode })),
+  });
+
+  await plugin.settings.registerBooleanSetting({
+    id: SETTINGS.petals,
+    title: 'Falling petals',
+    description:
+      'Drift petals across the window. Off by default, and it holds still if your system asks for reduced motion.',
+    defaultValue: DEFAULT_OPTIONS.petals,
+  });
+
+  await plugin.settings.registerDropdownSetting({
+    id: SETTINGS.petalDensity,
+    title: 'Petal density',
+    description: 'How many petals are on screen. Only applies when falling petals are on.',
+    defaultValue: DEFAULT_OPTIONS.petalDensity,
+    options: PETAL_DENSITIES.map((density) => ({
+      key: density,
+      label: DENSITY_LABELS[density],
+      value: density,
+    })),
+  });
+
+  await plugin.settings.registerDropdownSetting({
+    id: SETTINGS.petalSpeed,
+    title: 'Petal speed',
+    description: 'How fast petals fall. Only applies when falling petals are on.',
+    defaultValue: DEFAULT_OPTIONS.petalSpeed,
+    options: PETAL_SPEEDS.map((speed) => ({ key: speed, label: SPEED_LABELS[speed], value: speed })),
+  });
+
+  // Re-runs whenever any of these settings changes, which is what makes the
+  // dropdowns feel live rather than needing a reload.
+  plugin.track(async (reactivePlugin) => {
+    const options = normalizeOptions({
+      shade: await reactivePlugin.settings.getSetting<string>(SETTINGS.shade),
+      trees: await reactivePlugin.settings.getSetting<TreeMode>(SETTINGS.trees),
+      petals: await reactivePlugin.settings.getSetting<boolean>(SETTINGS.petals),
+      petalDensity: await reactivePlugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
+      petalSpeed: await reactivePlugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
+    });
+
+    const css = compose(options);
+    await reactivePlugin.app.registerCSS(CSS_KEY, css);
+
+    console.debug(`${LOG_PREFIX} applied stylesheet`, {
+      shade: options.shade,
+      trees: options.trees,
+      petals: options.petals,
+      petalDensity: options.petalDensity,
+      petalSpeed: options.petalSpeed,
+      cssBytes: css.length,
+      source: 'settings.getSetting',
+      cssKey: CSS_KEY,
+    });
+  });
+
+  await plugin.app.registerCommand({
+    id: 'sakura-toggle-petals',
+    name: 'Sakura: Toggle falling petals',
+    description: 'Turn the drifting petals on or off',
+    action: async () => {
+      // Settings are read only from the API, so this reports where the control
+      // lives rather than pretending to flip it.
+      const petals = await plugin.settings.getSetting<boolean>(SETTINGS.petals);
+      await plugin.app.toast(
+        petals
+          ? 'Petals are on. Turn them off in Settings, Plugins, Sakura.'
+          : 'Petals are off. Turn them on in Settings, Plugins, Sakura.'
+      );
+      console.debug(`${LOG_PREFIX} petal toggle command`, { petals, source: 'command' });
+    },
+  });
+
+  console.debug(`${LOG_PREFIX} activated`, { shades: SHADES.map((s) => s.id) });
+}
+
+/**
+ * Clear the stylesheet on deactivate.
+ *
+ * Without this the theme stays applied after the plugin is disabled, which
+ * reads as a broken app rather than a disabled plugin.
+ */
+async function onDeactivate(plugin: ReactRNPlugin) {
+  await plugin.app.registerCSS(CSS_KEY, '');
+  console.debug(`${LOG_PREFIX} deactivated, cleared css`, { cssKey: CSS_KEY });
+}
+
+declareIndexPlugin(onActivate, onDeactivate);
