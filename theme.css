@@ -106,6 +106,12 @@ html {
 .rn-document-wrapper {
   background-color: transparent;
 }
+.EditorContainer,
+.rem-container,
+.rich-text-editor,
+#hierarchy-editor {
+  background-color: transparent;
+}
 .rn-pane,
 .rn-pane__body,
 .rn-multiple-window-pane,

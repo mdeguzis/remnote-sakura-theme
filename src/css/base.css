@@ -91,6 +91,31 @@ html {
 }
 
 /*
+ * The editor container.
+ *
+ * Firefox devtools found what six rounds of inference did not. The light
+ * rectangle covering the artwork computed to:
+ *
+ *   background-color: rgb(244, 244, 250)   on   div.EditorContainer.h-full
+ *
+ * That colour is RemNote's own, not one of ours: `elevated` is a pink
+ * 254,246,249. And the class is PascalCase with no `rn-` prefix, so it is
+ * internal and appears nowhere in the documented token list. No amount of
+ * reading the docs would have produced it.
+ *
+ * These are internal names and can change between RemNote versions. If a light
+ * rectangle reappears over the artwork after an update, this block is the first
+ * place to look, and the CSS Selector Helper or devtools is the way to confirm
+ * the new one.
+ */
+.EditorContainer,
+.rem-container,
+.rich-text-editor,
+#hierarchy-editor {
+  background-color: transparent;
+}
+
+/*
  * Panes.
  *
  * The CSS Selector Helper reported this ancestor chain for the light rectangle
