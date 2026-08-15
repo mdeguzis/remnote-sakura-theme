@@ -76,7 +76,12 @@ function parseArgs(argv) {
 function copyToClipboard(text) {
   for (const [command, args] of CLIPBOARDS) {
     try {
-      execFileSync(command, args, { input: text });
+      // stdout and stderr are explicitly ignored rather than captured.
+      // wl-copy forks a daemon to serve the selection for as long as it is
+      // offered, and that daemon inherits any captured pipes. Capturing them
+      // makes execFileSync block until the daemon exits, which is to say until
+      // the user copies something else.
+      execFileSync(command, args, { input: text, stdio: ['pipe', 'ignore', 'ignore'] });
       return command;
     } catch (err) {
       // Only a missing binary is worth trying the next candidate for. A real
