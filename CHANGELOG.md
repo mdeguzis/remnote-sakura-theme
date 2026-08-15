@@ -3,6 +3,20 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-08-15
+
+### Fixed
+
+- The plugin zip now includes `theme.css`, without which RemNote refuses the
+  upload: "Theme plugins must include a theme.css file." Declaring
+  `"theme": ["light", "dark"]` classifies the plugin as a theme, and a theme
+  plugin must carry that file even when its CSS is applied through
+  `registerCSS`. The requirement is not in the submission documentation.
+
+  The file is empty on purpose. The stylesheet is composed at runtime because it
+  changes with the settings, and shipping the defaults here as well would mean
+  two copies of the theme competing for the same surfaces.
+
 ## [1.1.1] - 2026-08-15
 
 ### Fixed

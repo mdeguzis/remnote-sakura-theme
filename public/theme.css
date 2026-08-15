@@ -1,0 +1,20 @@
+/*
+ * Intentionally empty. Required by RemNote's uploader.
+ *
+ * A manifest declaring "theme": ["light", "dark"] is classified as a theme
+ * plugin, and the uploader rejects one without a theme.css:
+ *
+ *   Theme plugins must include a theme.css file.
+ *
+ * That rule is not in the submission documentation. catppuccin/remnote, which
+ * is in the marketplace, carries the same empty file with the comment "file
+ * required for plugin upload", so this is the established way to satisfy it.
+ *
+ * The stylesheet itself is composed at runtime and applied through
+ * plugin.app.registerCSS, because it has to change when the settings change.
+ * Putting the default CSS here as well would mean two copies of the theme
+ * fighting over the same surfaces.
+ *
+ * The standalone theme build is a different artifact: SakuraTheme.zip has a
+ * real theme.css, since a plain theme cannot run JavaScript at all.
+ */

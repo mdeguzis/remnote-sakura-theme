@@ -24,6 +24,32 @@ test('the version is a plain semver triple', () => {
   assert.match(read('package.json').version, /^\d+\.\d+\.\d+$/);
 });
 
+test('the plugin bundle carries the files RemNote requires', () => {
+  // Everything in public/ is copied into the bundle, so these are what end up
+  // in the zip. RemNote's uploader rejects a manifest declaring "theme" if the
+  // zip has no theme.css, with "Theme plugins must include a theme.css file."
+  // That rule appears nowhere in the submission documentation, so nothing but
+  // a failed upload would reveal it again.
+  for (const file of ['manifest.json', 'theme.css', 'snippet.css']) {
+    assert.ok(fs.existsSync(path.join(ROOT, 'public', file)), `public/${file} is missing`);
+  }
+  // The icon sits at the repo root rather than in public/, because the theme
+  // zip needs it there too. webpack copies it into the bundle separately.
+  assert.ok(fs.existsSync(path.join(ROOT, 'logo.png')), 'logo.png is missing');
+});
+
+test('a manifest declaring a theme is packaged as a theme plugin', () => {
+  // The declaration is what triggers the theme.css requirement, so the two have
+  // to be changed together.
+  const manifest = read('public/manifest.json');
+  if (Array.isArray(manifest.theme) && manifest.theme.length > 0) {
+    assert.ok(
+      fs.existsSync(path.join(ROOT, 'public', 'theme.css')),
+      'manifest declares "theme" but public/theme.css is missing, so the upload will be rejected'
+    );
+  }
+});
+
 test('the changelog has an entry for the current version', () => {
   // A release with no changelog entry is a release nobody can read.
   const version = read('package.json').version;
