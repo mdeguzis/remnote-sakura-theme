@@ -21,6 +21,8 @@ Build them with `npm install && npm run build`.
 
 Each shade carries its own light and dark palette and follows RemNote's Light / Dark / System setting under Settings, Interface.
 
+The dark palettes are deliberately not near black. A cherry theme that drops to charcoal at night keeps the branches but loses the reason for them, so these grounds hold their plum, indigo and ember instead. That spends some contrast against pure black, so what remains is measured rather than eyeballed: `tests/contrast.test.mjs` puts a WCAG floor under body text, muted text, panel text and the accent, in every shade and both modes.
+
 | Shade | |
 | --- | --- |
 | **Hanami** | Pale blush under an overcast spring sky. The default. |

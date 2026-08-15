@@ -36,18 +36,18 @@
 
 html.dark,
 html:has(.dark) {
-  --sakura-bg-top: 28, 22, 30;
-  --sakura-bg-bottom: 22, 17, 25;
-  --sakura-surface: 35, 27, 38;
-  --sakura-elevated: 44, 34, 47;
-  --sakura-text: 240, 228, 236;
-  --sakura-text-muted: 166, 146, 160;
-  --sakura-accent: 236, 148, 184;
-  --sakura-accent-soft: 68, 44, 60;
-  --sakura-border: 58, 45, 62;
-  --sakura-wood: 146, 108, 100;
-  --sakura-blossom: 224, 138, 172;
-  --sakura-petal: 232, 158, 188;
+  --sakura-bg-top: 48, 29, 42;
+  --sakura-bg-bottom: 36, 21, 31;
+  --sakura-surface: 58, 36, 50;
+  --sakura-elevated: 71, 46, 61;
+  --sakura-text: 250, 235, 243;
+  --sakura-text-muted: 203, 172, 188;
+  --sakura-accent: 248, 154, 194;
+  --sakura-accent-soft: 99, 56, 80;
+  --sakura-border: 92, 60, 79;
+  --sakura-wood: 182, 132, 128;
+  --sakura-blossom: 246, 160, 196;
+  --sakura-petal: 248, 176, 206;
 }
 
 html {
