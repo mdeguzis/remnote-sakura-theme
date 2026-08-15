@@ -106,6 +106,16 @@ html {
 .rn-document-wrapper {
   background-color: transparent;
 }
+.rn-pane,
+.rn-pane__body,
+.rn-multiple-window-pane,
+.rn-content-and-right-sidebar {
+  background-color: transparent;
+}
+.rn-multiple-window-pane + .rn-multiple-window-pane,
+.rn-pane + .rn-pane {
+  border-left: 1px solid rgba(var(--sakura-border), 0.55);
+}
 .rn-sidebar,
 .rn-document-sidebar,
 .rn-left-sidebar {

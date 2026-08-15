@@ -90,6 +90,37 @@ html {
   background-color: transparent;
 }
 
+/*
+ * Panes.
+ *
+ * The CSS Selector Helper reported this ancestor chain for the light rectangle
+ * that would not take a theme:
+ *
+ *   rn-pane__body / rn-multiple-window-pane / rn-pane /
+ *   rn-content-and-right-sidebar / rn-clr-background-primary
+ *
+ * None of those pane classes were styled here, so in a split layout each pane
+ * painted its own untouched background over the page and the scenery behind it.
+ * It looked like a code block refusing to go transparent, which is what several
+ * rounds of code block selectors were aimed at.
+ *
+ * Panes are structure, not surface: the page gradient and the artwork should
+ * run underneath them uninterrupted.
+ */
+.rn-pane,
+.rn-pane__body,
+.rn-multiple-window-pane,
+.rn-content-and-right-sidebar {
+  background-color: transparent;
+}
+
+/* With no fill the boundary between split panes disappears, so it is drawn
+ * explicitly rather than implied by a change of colour. */
+.rn-multiple-window-pane + .rn-multiple-window-pane,
+.rn-pane + .rn-pane {
+  border-left: 1px solid rgba(var(--sakura-border), 0.55);
+}
+
 .rn-sidebar,
 .rn-document-sidebar,
 .rn-left-sidebar {
