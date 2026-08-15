@@ -93,8 +93,30 @@ html {
 .rn-sidebar,
 .rn-document-sidebar,
 .rn-left-sidebar {
-  background-color: rgba(var(--sakura-surface), 0.66);
+  background-color: rgba(var(--sakura-surface), 0.52);
   backdrop-filter: blur(6px);
+}
+
+/*
+ * Only the sidebar shell paints a background.
+ *
+ * RemNote nests containers inside the sidebar that each carry their own
+ * background utility. Every one of those is translucent here, but alpha
+ * compounds: three layers at 0.7 stacked come out around 0.97, so the branch
+ * behind the sidebar is effectively hidden even though nothing is opaque.
+ *
+ * Clearing the inner containers means the branch passes through exactly one
+ * translucent surface, which is what makes it visible at all on that side.
+ * The active row highlight uses the elevation classes and is deliberately not
+ * cleared here.
+ */
+.rn-sidebar .rn-clr-background-primary,
+.rn-sidebar .rn-clr-background-secondary,
+.rn-sidebar .rn-clr-background-tertiary,
+.rn-left-sidebar .rn-clr-background-primary,
+.rn-left-sidebar .rn-clr-background-secondary,
+.rn-left-sidebar .rn-clr-background-tertiary {
+  background-color: transparent;
 }
 
 /*
@@ -174,14 +196,18 @@ html {
 /*
  * Code blocks.
  *
- * Left opaque these punch a hard rectangle straight through the scenery: the
- * shop carries on either side of the block and simply stops where the block
- * begins. At this alpha the artwork reads continuously behind the code while
- * the code itself stays perfectly legible, helped by the blur underneath it.
+ * These are the surfaces most likely to sit on top of the scenery, and there is
+ * no value here that is right for everyone. Opaque punches a clean rectangle
+ * through the drawing so the shop stops dead where the block begins. Translucent
+ * lets the drawing through, but muted, so it steps in brightness at the block
+ * edge and stops reading as one object.
+ *
+ * So it is a setting rather than a decision. --sakura-code-opacity comes from
+ * the plugin, and the static theme bakes in the default.
  */
 .rn-code-node,
 .rn-editor pre {
-  background-color: rgba(var(--sakura-elevated), 0.8);
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
   backdrop-filter: blur(8px) saturate(115%);
   border-radius: 10px;
 }

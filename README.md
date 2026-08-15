@@ -35,10 +35,14 @@ Only in the plugin build. Settings, Plugins, Sakura.
 | Setting | Options | Default |
 | --- | --- | --- |
 | Shade | Hanami, Yozakura, Yuzakura, Shirayuki | Hanami |
-| Blossom branches | Off, Subtle, Normal, Bold | Normal |
+| Blossom branches | Off, Subtle, Normal, Bold | Bold |
+| Corner shop | On, Off | On |
+| Code block opacity | 0 to 100 | 80 |
 | Falling petals | On, Off | **Off** |
 | Petal density | Sparse, Gentle, Heavy | Gentle |
 | Petal speed | Slow, Drifting, Brisk | Drifting |
+
+Code block opacity is a taste setting rather than a default worth arguing over. A code block sitting on top of the scenery either hides it, or lets it through muted so the drawing steps in brightness at the block edge and stops reading as one object. Lower the number to see more of the shop, raise it for flatter, easier code.
 
 Petals are off by default. Continuous motion behind text is charming for a day and irritating by the third, so you opt in. If your system asks for reduced motion the petals stay visible but stop moving, even when you have turned them on.
 

@@ -8,6 +8,7 @@ import {
   PETAL_DENSITIES,
   PETAL_SPEEDS,
   TREE_MODES,
+  clampPercent,
   normalizeOptions,
 } from '../src/lib/options.ts';
 
@@ -164,11 +165,43 @@ test('normalizeOptions keeps valid values untouched', () => {
     shade: 'yozakura',
     trees: 'bold',
     scenery: false,
+    codeOpacity: 42,
     petals: true,
     petalDensity: 'heavy',
     petalSpeed: 'brisk',
   };
   assert.deepEqual(normalizeOptions(input), input);
+});
+
+// --- code block opacity --------------------------------------------------
+
+test('code opacity reaches the stylesheet as a 0 to 1 alpha', () => {
+  const css = compose({ ...DEFAULT_OPTIONS, codeOpacity: 40 });
+  assert.match(css, /--sakura-code-opacity: 0\.400/);
+});
+
+test('code opacity is clamped to a valid alpha', () => {
+  // A number setting accepts whatever the user types, and an out of range
+  // alpha voids the whole declaration rather than just being ignored.
+  assert.equal(clampPercent(150, 80), 100);
+  assert.equal(clampPercent(-20, 80), 0);
+  assert.equal(clampPercent('65', 80), 65);
+  assert.equal(clampPercent('abc', 80), 80);
+  assert.equal(clampPercent(undefined, 80), 80);
+  assert.equal(clampPercent(null, 80), 80);
+});
+
+test('an out of range code opacity never emits an invalid alpha', () => {
+  for (const value of [999, -50, Number.NaN, 'wide open']) {
+    const css = compose({ ...DEFAULT_OPTIONS, codeOpacity: value });
+    const alpha = Number.parseFloat(/--sakura-code-opacity: ([\d.]+)/.exec(css)[1]);
+    assert.ok(alpha >= 0 && alpha <= 1, `alpha ${alpha} out of range for input ${value}`);
+  }
+});
+
+test('the extremes of the code opacity setting both work', () => {
+  assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 0 }), /--sakura-code-opacity: 0\.000/);
+  assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 100 }), /--sakura-code-opacity: 1\.000/);
 });
 
 // --- scenery -------------------------------------------------------------

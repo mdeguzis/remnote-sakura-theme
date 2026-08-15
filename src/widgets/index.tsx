@@ -23,6 +23,7 @@ const SETTINGS = {
   trees: 'trees',
   scenery: 'scenery',
   petals: 'petals',
+  codeOpacity: 'code-opacity',
   petalDensity: 'petal-density',
   petalSpeed: 'petal-speed',
 } as const;
@@ -74,6 +75,14 @@ async function onActivate(plugin: ReactRNPlugin) {
     defaultValue: DEFAULT_OPTIONS.scenery,
   });
 
+  await plugin.settings.registerNumberSetting({
+    id: SETTINGS.codeOpacity,
+    title: 'Code block opacity',
+    description:
+      'How solid code blocks are, from 0 to 100. Lower lets more of the scenery through behind them, higher keeps code easier to read. 80 is the default.',
+    defaultValue: DEFAULT_OPTIONS.codeOpacity,
+  });
+
   await plugin.settings.registerBooleanSetting({
     id: SETTINGS.petals,
     title: 'Falling petals',
@@ -109,6 +118,7 @@ async function onActivate(plugin: ReactRNPlugin) {
       shade: await reactivePlugin.settings.getSetting<string>(SETTINGS.shade),
       trees: await reactivePlugin.settings.getSetting<TreeMode>(SETTINGS.trees),
       scenery: await reactivePlugin.settings.getSetting<boolean>(SETTINGS.scenery),
+      codeOpacity: await reactivePlugin.settings.getSetting<number>(SETTINGS.codeOpacity),
       petals: await reactivePlugin.settings.getSetting<boolean>(SETTINGS.petals),
       petalDensity: await reactivePlugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
       petalSpeed: await reactivePlugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
@@ -121,6 +131,7 @@ async function onActivate(plugin: ReactRNPlugin) {
       shade: options.shade,
       trees: options.trees,
       scenery: options.scenery,
+      codeOpacity: options.codeOpacity,
       petals: options.petals,
       petalDensity: options.petalDensity,
       petalSpeed: options.petalSpeed,

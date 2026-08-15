@@ -9,6 +9,16 @@ export interface SakuraOptions {
   trees: TreeMode;
   /** The corner shop with the cat. Rides on the branch layers. */
   scenery: boolean;
+  /**
+   * Opacity of code blocks, as a percentage.
+   *
+   * There is no setting of this that is right for everyone. A code block that
+   * crosses the scenery either hides it, or lets it through muted so the
+   * artwork steps in brightness where the block begins. Opaque is cleaner,
+   * transparent shows more of the drawing, and the tradeoff is a matter of
+   * taste rather than a bug to fix.
+   */
+  codeOpacity: number;
   petals: boolean;
   petalDensity: PetalDensity;
   petalSpeed: PetalSpeed;
@@ -24,6 +34,7 @@ export const DEFAULT_OPTIONS: SakuraOptions = {
   shade: 'hanami',
   trees: 'bold',
   scenery: true,
+  codeOpacity: 80,
   petals: false,
   petalDensity: 'gentle',
   petalSpeed: 'drifting',
@@ -67,6 +78,18 @@ export const PETAL_SPEEDS: PetalSpeed[] = ['slow', 'drifting', 'brisk'];
  * `undefined` in it, which would break the whole stylesheet rather than one
  * setting.
  */
+/**
+ * Clamp a percentage from a free text number setting.
+ *
+ * RemNote number settings accept anything the user types, and a value outside
+ * 0 to 100 produces an invalid alpha that silently voids the whole declaration.
+ */
+export function clampPercent(value: unknown, fallback: number): number {
+  const n = typeof value === 'number' ? value : Number.parseFloat(String(value));
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(100, Math.max(0, Math.round(n)));
+}
+
 export function normalizeOptions(raw: Partial<SakuraOptions> | null | undefined): SakuraOptions {
   const input = raw ?? {};
   const pick = <T extends string>(value: unknown, allowed: T[], fallback: T): T =>
@@ -76,6 +99,7 @@ export function normalizeOptions(raw: Partial<SakuraOptions> | null | undefined)
     shade: typeof input.shade === 'string' ? input.shade : DEFAULT_OPTIONS.shade,
     trees: pick(input.trees, TREE_MODES, DEFAULT_OPTIONS.trees),
     scenery: typeof input.scenery === 'boolean' ? input.scenery : DEFAULT_OPTIONS.scenery,
+    codeOpacity: clampPercent(input.codeOpacity, DEFAULT_OPTIONS.codeOpacity),
     petals: typeof input.petals === 'boolean' ? input.petals : DEFAULT_OPTIONS.petals,
     petalDensity: pick(input.petalDensity, PETAL_DENSITIES, DEFAULT_OPTIONS.petalDensity),
     petalSpeed: pick(input.petalSpeed, PETAL_SPEEDS, DEFAULT_OPTIONS.petalSpeed),

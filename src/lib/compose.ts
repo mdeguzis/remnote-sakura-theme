@@ -98,6 +98,7 @@ export function compose(rawOptions: Partial<SakuraOptions>): string {
   --sakura-petal-size-far: ${tile.far};
   --sakura-petal-duration-near: ${duration.near}s;
   --sakura-petal-duration-far: ${duration.far}s;
+  --sakura-code-opacity: ${(options.codeOpacity / 100).toFixed(3)};
 }`);
 
   // Dark mode has to land on the ROOT element, not on whichever element

@@ -187,10 +187,23 @@ function lights() {
   return `<g fill-opacity="${LIGHT_ALPHA}">${parts.join('')}</g>`;
 }
 
+/**
+ * Mirror the scene horizontally.
+ *
+ * The drawing is laid out with the shop on the left and the cat on the right,
+ * which is the natural reading order to compose in. But the whole thing is
+ * anchored to the bottom right corner of the viewport, so in that orientation
+ * the cat ends up jammed into the very corner where it is hardest to see.
+ *
+ * Flipping puts the cat on the inward side, closest to the middle of the
+ * window. It also keeps the cat facing the shop rather than facing out of the
+ * frame, because its eye mirrors along with everything else.
+ */
 function wrap(body) {
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW_W} ${VIEW_H}" ` +
-    `width="${VIEW_W}" height="${VIEW_H}" fill="#000">${body}</svg>`
+    `width="${VIEW_W}" height="${VIEW_H}" fill="#000">` +
+    `<g transform="translate(${VIEW_W},0) scale(-1,1)">${body}</g></svg>`
   );
 }
 
