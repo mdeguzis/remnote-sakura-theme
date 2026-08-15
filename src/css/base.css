@@ -216,7 +216,17 @@ html {
 .rn-editor .cm-gutters,
 .rn-code-node [class*='language-'],
 .rn-editor pre[class*='language-'] {
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
+  /*
+   * !important, reluctantly.
+   *
+   * The debug report confirms the opacity variable reaches the stylesheet as
+   * 0.000 and the blur as none, yet the block stays filled. So either these
+   * selectors miss the element, or they match and lose the cascade to a
+   * RemNote rule that is more specific or simply comes later. This settles the
+   * second case at no cost. If the block is still filled after it, the
+   * selectors are wrong and only the CSS Selector Helper can say what is right.
+   */
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
   backdrop-filter: var(--sakura-code-blur);
   border-radius: 10px;
   /* At a low opacity the fill alone stops marking where the block starts and
@@ -245,7 +255,7 @@ html {
 [class*='rn-clr-background-elevation']:has(.cm-editor),
 [class*='rn-clr-background-elevation']:has(.rn-code-node),
 [class*='rn-clr-background-elevation']:has([class*='language-']) {
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
   backdrop-filter: var(--sakura-code-blur);
 }
 

@@ -178,7 +178,8 @@ html {
 .rn-editor .cm-gutters,
 .rn-code-node [class*='language-'],
 .rn-editor pre[class*='language-'] {
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
+
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
   backdrop-filter: var(--sakura-code-blur);
   border-radius: 10px;
 
@@ -189,7 +190,7 @@ html {
 [class*='rn-clr-background-elevation']:has(.cm-editor),
 [class*='rn-clr-background-elevation']:has(.rn-code-node),
 [class*='rn-clr-background-elevation']:has([class*='language-']) {
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
   backdrop-filter: var(--sakura-code-blur);
 }
 .rn-editor :not(pre) > code {
