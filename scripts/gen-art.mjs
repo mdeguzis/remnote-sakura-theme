@@ -33,6 +33,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { makeShopSvgs } from './lib/shop.mjs';
+import { writeIfChanged } from './lib/write-if-changed.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'assets');
@@ -272,11 +273,14 @@ for (const [position, spec] of Object.entries(BRANCHES)) {
 function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
 
+  let changed = 0;
   for (const [name, svg] of Object.entries(ASSETS)) {
-    const file = path.join(OUT_DIR, name);
-    fs.writeFileSync(file, svg + '\n', 'utf8');
-    console.log(`[gen-art] ${name} ${Buffer.byteLength(svg, 'utf8')} bytes`);
+    if (writeIfChanged(path.join(OUT_DIR, name), svg + '\n')) {
+      changed++;
+      console.log(`[gen-art] ${name} ${Buffer.byteLength(svg, 'utf8')} bytes`);
+    }
   }
+  if (changed === 0) console.log('[gen-art] unchanged');
 }
 
 main();

@@ -12,7 +12,7 @@ const { execFileSync } = require('child_process');
 const isProd = process.env.NODE_ENV === 'production';
 
 /**
- * Re-inline assets/ and src/css/ before every compile.
+ * Regenerate the artwork and re-inline assets/ and src/css/ before every compile.
  *
  * Those directories are the real source, but the bundle imports them through
  * generated modules that only exist because a build step wrote them. Without
@@ -25,12 +25,34 @@ class InlineSourcesPlugin {
   apply(compiler) {
     compiler.hooks.beforeCompile.tap('InlineSourcesPlugin', () => {
       try {
+        // Artwork first: build-sources inlines whatever gen-art leaves on disk,
+        // so running them the other way round inlines the previous drawing.
+        execFileSync('node', [resolve(__dirname, 'scripts/gen-art.mjs')], { stdio: 'inherit' });
         execFileSync('node', [resolve(__dirname, 'scripts/build-sources.mjs')], { stdio: 'inherit' });
       } catch (error) {
         // Do not take the whole dev server down for one bad edit. The compile
         // continues against the previous generated modules and the next save
         // gets another attempt.
         console.error('[webpack] failed to inline sources:', error.message);
+      }
+    });
+
+    // Put the real source directories into webpack's dependency graph.
+    //
+    // Nothing in the bundle imports assets/, src/css/ or the generator scripts.
+    // They reach it only through the generated modules, so webpack has no idea
+    // they exist and never recompiles when they change. devServer.watchFiles
+    // does notice them, but it only reloads the page, and reloading serves the
+    // same stale bundle.
+    //
+    // Registering them as context dependencies is what makes a save trigger an
+    // actual compile, which is what runs the generators above. This is safe
+    // only because those generators skip writing when nothing changed: without
+    // that, each regeneration would dirty a watched directory and start the
+    // compile loop again.
+    compiler.hooks.afterCompile.tap('InlineSourcesPlugin', (compilation) => {
+      for (const dir of ['assets', 'src/css', 'scripts']) {
+        compilation.contextDependencies.add(resolve(__dirname, dir));
       }
     });
   }

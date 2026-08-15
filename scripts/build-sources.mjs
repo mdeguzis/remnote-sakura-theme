@@ -10,26 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/**
- * Write only when the content actually changed.
- *
- * webpack runs this before every compile and also watches the directory it
- * writes into. An unconditional write means every compile dirties a watched
- * file, which triggers the next compile: a loop that spins the CPU forever and
- * is invisible apart from the machine getting hot. It reached fifteen thousand
- * compiles before anyone looked.
- *
- * @returns {boolean} whether anything was written
- */
-function writeIfChanged(file, contents) {
-  try {
-    if (fs.readFileSync(file, 'utf8') === contents) return false;
-  } catch (err) {
-    if (err.code !== 'ENOENT') throw err;
-  }
-  fs.writeFileSync(file, contents, 'utf8');
-  return true;
-}
+import { writeIfChanged } from './lib/write-if-changed.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ASSET_DIR = path.join(ROOT, 'assets');
