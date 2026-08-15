@@ -48,6 +48,17 @@ const SPEED_LABELS: Record<PetalSpeed, string> = {
 };
 
 async function onActivate(plugin: ReactRNPlugin) {
+  try {
+    await registerEverything(plugin);
+  } catch (error) {
+    // A throw here leaves the plugin loaded but inert, with nothing in the UI
+    // to say why. Borrowed from catppuccin/remnote, which does the same.
+    console.error(`${LOG_PREFIX} activation failed`, error);
+    await plugin.app.toast('Sakura failed to start. See the developer console for details.');
+  }
+}
+
+async function registerEverything(plugin: ReactRNPlugin) {
   await plugin.settings.registerDropdownSetting({
     id: SETTINGS.shade,
     title: 'Shade',

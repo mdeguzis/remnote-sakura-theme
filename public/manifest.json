@@ -7,13 +7,20 @@
   "repoUrl": "https://github.com/mdeguzis/remnote-sakura-theme",
   "projectUrl": "https://github.com/mdeguzis/remnote-sakura-theme",
   "supportUrl": "https://github.com/mdeguzis/remnote-sakura-theme/issues",
-  "version": { "major": 0, "minor": 1, "patch": 0 },
-  "theme": ["light", "dark"],
+  "version": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0
+  },
+  "theme": [
+    "light",
+    "dark"
+  ],
   "enableOnMobile": true,
   "requestNative": false,
   "requiredScopes": [
     {
-      "type": "KnowledgeBaseInfo",
+      "type": "All",
       "level": "Read"
     }
   ]
