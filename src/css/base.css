@@ -161,38 +161,6 @@ html {
 }
 
 /*
- * The editor container.
- *
- * Firefox devtools found what six rounds of inference did not. The light
- * rectangle covering the artwork computed to:
- *
- *   background-color: rgb(244, 244, 250)   on   div.EditorContainer.h-full
- *
- * That colour is RemNote's own, not one of ours: `elevated` is a pink
- * 254,246,249. And the class is PascalCase with no `rn-` prefix, so it is
- * internal and appears nowhere in the documented token list. No amount of
- * reading the docs would have produced it.
- *
- * These are internal names and can change between RemNote versions. If a light
- * rectangle reappears over the artwork after an update, this block is the first
- * place to look, and the CSS Selector Helper or devtools is the way to confirm
- * the new one.
- */
-#hierarchy-editor .rem-container .EditorContainer,
-.EditorContainer,
-.rem-container,
-.rich-text-editor,
-#hierarchy-editor {
-  /*
-   * Matched at RemNote's own specificity. Its rule is
-   * `#hierarchy-editor .rem-container .EditorContainer`, which is (1,2,0); a
-   * bare `.EditorContainer` at (0,1,0) lost silently and looked like the rule
-   * had no effect at all.
-   */
-  background-color: transparent;
-}
-
-/*
  * Panes.
  *
  * The CSS Selector Helper reported this ancestor chain for the light rectangle
@@ -329,67 +297,25 @@ html {
 /*
  * Code blocks.
  *
- * These sit on top of the scenery more than any other surface, and only the two
- * ends of the opacity range avoid an artifact. At 0 there is no fill and the
- * drawing behind is continuous. At 100 the block is solid and hides it cleanly.
- * Anything in between shows the artwork dimmed, so it steps in brightness at
- * the block edge and stops reading as one object.
+ * The real work is done by --current-background-color in the token block above,
+ * which is what RemNote actually paints these with. This rule only adds the
+ * border and radius, and repeats the fill for any code surface that sets its
+ * own background rather than reading the variable.
  *
- * The blur is tied to the fill for the same reason: blurring at zero opacity
- * would leave the artwork sharp outside the block and soft inside, which is the
- * same discontinuity wearing a different hat.
+ * Everything else that used to live here has been removed: an !important, a
+ * :has() rule guessing at a wrapper class, and a set of CodeMirror selectors.
+ * All three were aimed at an element that was never painting the background,
+ * and none of them ever did anything.
  */
 .rn-code-node,
-.rn-editor pre,
-.rn-code-node .cm-editor,
-.rn-code-node .cm-scroller,
-.rn-code-node .cm-gutters,
-.rn-editor .cm-editor,
-.rn-editor .cm-scroller,
-.rn-editor .cm-gutters,
-.rn-code-node [class*='language-'],
-.rn-editor pre[class*='language-'] {
-  /*
-   * !important, reluctantly.
-   *
-   * The debug report confirms the opacity variable reaches the stylesheet as
-   * 0.000 and the blur as none, yet the block stays filled. So either these
-   * selectors miss the element, or they match and lose the cascade to a
-   * RemNote rule that is more specific or simply comes later. This settles the
-   * second case at no cost. If the block is still filled after it, the
-   * selectors are wrong and only the CSS Selector Helper can say what is right.
-   */
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
+.rn-editor pre {
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
   backdrop-filter: var(--sakura-code-blur);
   border-radius: 10px;
   /* At a low opacity the fill alone stops marking where the block starts and
    * ends, so the edge is drawn explicitly instead of relying on the fill. Kept
    * faint: it is there to bound the block, not to outline it. */
   border: 1px solid rgba(var(--sakura-border), 0.5);
-}
-
-/*
- * The container, whatever RemNote called it.
- *
- * Setting the opacity to 0 left the block just as filled as before, which means
- * the fill was never coming from the rules above. The likely source is the
- * elevation utilities: those are painted at 0.94 for menus and dialogs, and if
- * the code block's wrapper carries one of those classes it takes that fill and
- * ignores everything aimed at .rn-code-node.
- *
- * Rather than guess the wrapper's name, this matches any elevation surface that
- * CONTAINS code. :has() is what makes that possible, and Electron 36 supports
- * it. If RemNote uses neither an elevation class nor a recognisable code child,
- * this still misses and the real class has to come from the CSS Selector
- * Helper.
- */
-[class*='rn-clr-background-elevation']:has(> pre),
-[class*='rn-clr-background-elevation']:has(> code),
-[class*='rn-clr-background-elevation']:has(.cm-editor),
-[class*='rn-clr-background-elevation']:has(.rn-code-node),
-[class*='rn-clr-background-elevation']:has([class*='language-']) {
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
-  backdrop-filter: var(--sakura-code-blur);
 }
 
 /* Inline code is small and sits mid sentence, so it keeps more of a fill to

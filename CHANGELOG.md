@@ -3,6 +3,25 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-08-15
+
+### Fixed
+
+- Panel opacity now reaches the editor container. A leftover rule forced
+  `.EditorContainer` to `transparent`, which overrode
+  `--current-background-color` and meant the setting could not affect that
+  surface whatever it was set to.
+
+### Removed
+
+- Dead CSS from the search for the element that was covering the artwork: an
+  `!important`, a `:has()` rule guessing at a code block wrapper class, and a
+  set of CodeMirror background selectors. All three targeted elements that were
+  never painting the background. Roughly 2.6 KB of the stylesheet.
+
+  The CodeMirror scrollbar rules stay: those were verified against a real
+  element and do work.
+
 ## [1.1.0] - 2026-08-15
 
 ### Removed

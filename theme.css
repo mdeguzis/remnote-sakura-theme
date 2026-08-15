@@ -140,14 +140,6 @@ html {
 .rn-document-wrapper {
   background-color: transparent;
 }
-#hierarchy-editor .rem-container .EditorContainer,
-.EditorContainer,
-.rem-container,
-.rich-text-editor,
-#hierarchy-editor {
-
-  background-color: transparent;
-}
 .rn-pane,
 .rn-pane__body,
 .rn-multiple-window-pane,
@@ -221,29 +213,12 @@ html {
   border-radius: 12px;
 }
 .rn-code-node,
-.rn-editor pre,
-.rn-code-node .cm-editor,
-.rn-code-node .cm-scroller,
-.rn-code-node .cm-gutters,
-.rn-editor .cm-editor,
-.rn-editor .cm-scroller,
-.rn-editor .cm-gutters,
-.rn-code-node [class*='language-'],
-.rn-editor pre[class*='language-'] {
-
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
+.rn-editor pre {
+  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
   backdrop-filter: var(--sakura-code-blur);
   border-radius: 10px;
 
   border: 1px solid rgba(var(--sakura-border), 0.5);
-}
-[class*='rn-clr-background-elevation']:has(> pre),
-[class*='rn-clr-background-elevation']:has(> code),
-[class*='rn-clr-background-elevation']:has(.cm-editor),
-[class*='rn-clr-background-elevation']:has(.rn-code-node),
-[class*='rn-clr-background-elevation']:has([class*='language-']) {
-  background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity)) !important;
-  backdrop-filter: var(--sakura-code-blur);
 }
 .rn-editor :not(pre) > code {
   background-color: rgba(var(--sakura-accent-soft), 0.6);
