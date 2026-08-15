@@ -18,6 +18,71 @@
  * blur, so a popup over a branch reads as frosted glass rather than as mud.
  */
 
+/*
+ * RemNote's design tokens, repointed at this palette.
+ *
+ * This is the real way to theme RemNote, and it took far too long to find. The
+ * documentation presents the tokens as classes (`.rn-clr-background-primary`),
+ * so this theme was originally built entirely out of class overrides. Inspecting
+ * a live element shows they are ALSO custom properties on the root:
+ *
+ *   --rn-clr-background-primary: rgb(255 255 255);
+ *   --rn-clr-background-secondary: rgb(244 244 250);
+ *   --current-background-color: rgb(244 244 250);
+ *
+ * Overriding the variables themes everything that resolves through them at
+ * once, including internal elements like .EditorContainer that carry no
+ * documented class and were individually hunted down for hours. The class rules
+ * further down are kept because some surfaces use them directly, but this block
+ * is what does the work.
+ *
+ * The alphas are the same idea as everywhere else here: page level surfaces let
+ * the artwork through, floating ones stay legible, text never goes translucent.
+ */
+:root {
+  --rn-clr-background-primary: rgba(var(--sakura-bg-top), 0.62);
+  --rn-clr-background-secondary: rgba(var(--sakura-surface), 0.7);
+  --rn-clr-background-tertiary: rgba(var(--sakura-surface), 0.78);
+
+  --rn-clr-background-elevation-5: rgba(var(--sakura-elevated), 0.94);
+  --rn-clr-background-elevation-10: rgba(var(--sakura-elevated), 0.94);
+  --rn-clr-background-elevation-15: rgba(var(--sakura-elevated), 0.94);
+  --rn-clr-background-elevation-20: rgba(var(--sakura-elevated), 0.94);
+  --rn-clr-background-elevation-30: rgba(var(--sakura-elevated), 0.95);
+  --rn-clr-background-elevation-40: rgba(var(--sakura-elevated), 0.95);
+  --rn-clr-background-elevation-50: rgba(var(--sakura-elevated), 0.96);
+  --rn-clr-background-elevation-60: rgba(var(--sakura-elevated), 0.96);
+  --rn-clr-background-elevation-70: rgba(var(--sakura-elevated), 0.96);
+  --rn-clr-background-elevation-80: rgba(var(--sakura-elevated), 0.97);
+  --rn-clr-background-elevation-90: rgba(var(--sakura-elevated), 0.97);
+  --rn-clr-background-elevation-100: rgba(var(--sakura-elevated), 0.97);
+
+  --rn-clr-background-accent: rgb(var(--sakura-accent));
+  --rn-clr-background-light-accent: rgba(var(--sakura-accent-soft), 0.85);
+  --rn-clr-background--hovered: rgba(var(--sakura-accent), 0.1);
+  --rn-clr-background--focused: rgba(var(--sakura-accent), 0.16);
+  --rn-clr-background--pressed: rgba(var(--sakura-accent), 0.2);
+  --rn-clr-background-primary--hovered: rgba(var(--sakura-accent), 0.08);
+  --rn-clr-background-state-disabled: rgba(var(--sakura-surface), 0.6);
+
+  --rn-clr-content-primary: rgb(var(--sakura-text));
+  --rn-clr-content-secondary: rgb(var(--sakura-text-muted));
+  --rn-clr-content-tertiary: rgb(var(--sakura-text-muted));
+  --rn-clr-content-accent: rgb(var(--sakura-accent));
+
+  --rn-clr-border-opaque: rgba(var(--sakura-border), 0.8);
+  --rn-clr-border-selected: rgb(var(--sakura-accent));
+  --rn-clr-border-accent: rgb(var(--sakura-accent));
+  --rn-clr-border-light-accent: rgba(var(--sakura-accent-soft), 0.9);
+
+  /*
+   * The one that covered the artwork. RemNote assigns this per surface and the
+   * editor container paints it, which is why a full window decorative layer
+   * was hidden behind a plain rectangle.
+   */
+  --current-background-color: transparent;
+}
+
 html {
   background-color: rgb(var(--sakura-bg-bottom));
   background-image: linear-gradient(170deg, rgb(var(--sakura-bg-top)) 0%, rgb(var(--sakura-bg-bottom)) 62%);
@@ -108,10 +173,17 @@ html {
  * place to look, and the CSS Selector Helper or devtools is the way to confirm
  * the new one.
  */
+#hierarchy-editor .rem-container .EditorContainer,
 .EditorContainer,
 .rem-container,
 .rich-text-editor,
 #hierarchy-editor {
+  /*
+   * Matched at RemNote's own specificity. Its rule is
+   * `#hierarchy-editor .rem-container .EditorContainer`, which is (1,2,0); a
+   * bare `.EditorContainer` at (0,1,0) lost silently and looked like the rule
+   * had no effect at all.
+   */
   background-color: transparent;
 }
 

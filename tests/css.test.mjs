@@ -90,6 +90,33 @@ test('the petal loop lands on whole tiles in both axes', () => {
   }
 });
 
+test('RemNote design tokens are repointed at the palette', () => {
+  // This is what actually themes the app. RemNote's tokens are custom
+  // properties as well as classes, and overriding the variables reaches
+  // internal elements that carry no documented class. Losing this block sends
+  // the theme back to hunting individual selectors.
+  const required = [
+    '--rn-clr-background-primary',
+    '--rn-clr-background-secondary',
+    '--rn-clr-content-primary',
+    '--rn-clr-border-opaque',
+    '--current-background-color',
+  ];
+  for (const name of required) {
+    assert.match(FULL, new RegExp(`${name}:`), `${name} is not overridden`);
+  }
+});
+
+test('every RemNote token override resolves to a sakura value', () => {
+  // An override pointing at nothing is worse than no override: it replaces
+  // RemNote's working colour with an invalid one.
+  const overrides = [...FULL.matchAll(/(--rn-clr-[\w-]+):\s*([^;]+);/g)];
+  assert.ok(overrides.length > 10, 'expected the token block to be substantial');
+  for (const [, name, value] of overrides) {
+    assert.match(value, /var\(--sakura-|transparent/, `${name} does not use a sakura value: ${value}`);
+  }
+});
+
 test('the resting scrollbar is not tinted with the accent', () => {
   // The accent is a saturated cherry. Used as a resting scrollbar colour it
   // draws a bright pink bar down the edge of every scrollable region, which
