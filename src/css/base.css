@@ -76,11 +76,16 @@
   --rn-clr-border-light-accent: rgba(var(--sakura-accent-soft), 0.9);
 
   /*
-   * The one that covered the artwork. RemNote assigns this per surface and the
-   * editor container paints it, which is why a full window decorative layer
-   * was hidden behind a plain rectangle.
+   * This is the code block's background, and the editor container's, and
+   * whatever else RemNote decides sits on a surface. Left at RemNote's value it
+   * covered the artwork completely; set to `transparent` the panel vanished
+   * entirely and code sat directly on the scenery.
+   *
+   * Neither extreme is what a code block wants. Binding it to the opacity
+   * setting makes it a dial: the panel is still a panel, the artwork still
+   * reads behind it, and the balance is the reader's to choose.
    */
-  --current-background-color: transparent;
+  --current-background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
 }
 
 html {

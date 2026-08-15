@@ -199,13 +199,18 @@ test('an out of range code opacity never emits an invalid alpha', () => {
   }
 });
 
-test('code blocks default to no fill so the scenery stays continuous', () => {
-  // Any value between the extremes shows the artwork dimmed, which steps in
-  // brightness at the block edge and stops reading as one object.
-  assert.equal(DEFAULT_OPTIONS.codeOpacity, 0);
-  const css = compose(DEFAULT_OPTIONS);
-  assert.match(css, /--sakura-code-opacity: 0\.000/);
-  assert.match(css, /--sakura-code-blur: none/);
+test('code blocks default to a frosted panel, not either extreme', () => {
+  // 0 leaves code sitting directly on the scenery with no panel at all; 100
+  // hides the artwork completely. The default is a panel you can see through.
+  assert.ok(DEFAULT_OPTIONS.codeOpacity > 20 && DEFAULT_OPTIONS.codeOpacity < 90);
+});
+
+test('the code opacity drives the variable RemNote actually paints', () => {
+  // --current-background-color is what code blocks and the editor container
+  // use. Hardcoding it hid the artwork at RemNote's value and removed the panel
+  // entirely at transparent, which is how both of those bugs happened.
+  const css = compose({ ...DEFAULT_OPTIONS, codeOpacity: 65 });
+  assert.match(css, /--current-background-color:\s*rgba\(var\(--sakura-elevated\), var\(--sakura-code-opacity\)\)/);
 });
 
 test('the blur is tied to the fill', () => {

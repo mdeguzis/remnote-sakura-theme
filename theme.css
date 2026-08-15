@@ -31,8 +31,8 @@
   --sakura-petal-size-far: 31vh;
   --sakura-petal-duration-near: 32s;
   --sakura-petal-duration-far: 50s;
-  --sakura-code-opacity: 0.000;
-  --sakura-code-blur: none;
+  --sakura-code-opacity: 0.650;
+  --sakura-code-blur: blur(8px) saturate(115%);
 }
 
 html.dark,
@@ -83,7 +83,7 @@ html:has(.dark) {
   --rn-clr-border-accent: rgb(var(--sakura-accent));
   --rn-clr-border-light-accent: rgba(var(--sakura-accent-soft), 0.9);
 
-  --current-background-color: transparent;
+  --current-background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
 }
 html {
   background-color: rgb(var(--sakura-bg-bottom));

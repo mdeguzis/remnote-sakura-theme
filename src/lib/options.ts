@@ -12,13 +12,11 @@ export interface SakuraOptions {
   /**
    * Opacity of code blocks, as a percentage.
    *
-   * Only the two ends of this range are free of artifacts. At 0 the block has
-   * no fill and the scenery behind it is continuous and whole. At 100 the block
-   * is solid and cleanly hides whatever it covers. Every value in between shows
-   * the artwork through but dimmed, so it steps in brightness at the block edge
-   * and stops reading as one object, which is the thing that kept looking wrong.
-   *
-   * Defaults to 0, because the point of this theme is the drawing.
+   * This drives `--current-background-color`, which is what RemNote actually
+   * paints code blocks and the editor container with. At 0 there is no panel at
+   * all and code sits directly on the scenery; at 100 the panel is solid and
+   * hides it. In between is a frosted panel with the artwork reading softly
+   * through, which is what most people want and what the default is set to.
    */
   codeOpacity: number;
   petals: boolean;
@@ -36,7 +34,7 @@ export const DEFAULT_OPTIONS: SakuraOptions = {
   shade: 'hanami',
   trees: 'bold',
   scenery: true,
-  codeOpacity: 0,
+  codeOpacity: 65,
   petals: false,
   petalDensity: 'gentle',
   petalSpeed: 'drifting',
