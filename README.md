@@ -2,6 +2,8 @@
 
 A cherry blossom theme. Branches grow in from the edges of the window and the interface sits translucent on top of them, so the tree is part of the app rather than a picture behind it.
 
+<img width="1570" height="1044" alt="image" src="https://github.com/user-attachments/assets/70293f39-957a-444e-8b22-4a66788b855e" />
+
 Four shades, adjustable branches, and falling petals you can turn on.
 
 ## Two ways to install
@@ -17,22 +19,11 @@ Install the plugin if you want the switches. Install the theme if you want one l
 
 Build them with `npm install && npm run build`.
 
-## Shades
-
-Each shade carries its own light and dark palette and follows RemNote's Light / Dark / System setting under Settings, Interface.
-
-The dark palettes are deliberately not near black. A cherry theme that drops to charcoal at night keeps the branches but loses the reason for them, so these grounds hold their plum, indigo and ember instead. That spends some contrast against pure black, so what remains is measured rather than eyeballed: `tests/contrast.test.mjs` puts a WCAG floor under body text, muted text, panel text and the accent, in every shade and both modes.
-
-| Shade | |
-| --- | --- |
-| **Hanami** | Pale blush under an overcast spring sky. The default. |
-| **Yozakura** | Night blossoms. Deep indigo and plum with lantern pink. |
-| **Yuzakura** | Evening bloom. Warm coral and peach at golden hour. |
-| **Shirayuki** | Almost white. Blossoms barely tinted, for reading all day. |
-
 ## Settings
 
-Only in the plugin build. Settings, Plugins, Sakura.
+<img width="1231" height="993" alt="image" src="https://github.com/user-attachments/assets/cdedd438-a661-4fcc-95b5-33481d399d20" />
+
+Settings, Plugins, Sakura.
 
 | Setting | Options | Default |
 | --- | --- | --- |
