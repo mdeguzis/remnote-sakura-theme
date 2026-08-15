@@ -23,7 +23,18 @@ const SETTINGS = {
   trees: 'trees',
   scenery: 'scenery',
   petals: 'petals',
-  codeOpacity: 'code-opacity',
+  /*
+   * Deliberately versioned.
+   *
+   * RemNote persists a setting the first time it is seen, and defaultValue
+   * never applies again. Anyone who installed while the default was 55 kept 55
+   * through every rebuild, so changing the default in code reached nobody and
+   * the artifact it was meant to remove stayed on screen.
+   *
+   * A new id has never been seen, so the current default takes effect. Bump
+   * this suffix whenever a default has to reach existing installs.
+   */
+  codeOpacity: 'code-opacity-v2',
   petalDensity: 'petal-density',
   petalSpeed: 'petal-speed',
 } as const;
@@ -46,6 +57,24 @@ const SPEED_LABELS: Record<PetalSpeed, string> = {
   drifting: 'Drifting',
   brisk: 'Brisk',
 };
+
+/**
+ * Read every setting and coerce it into usable options.
+ *
+ * Shared by the tracker and the reporting command so the two cannot disagree
+ * about what is actually in effect.
+ */
+async function readOptions(plugin: ReactRNPlugin) {
+  return normalizeOptions({
+    shade: await plugin.settings.getSetting<string>(SETTINGS.shade),
+    trees: await plugin.settings.getSetting<TreeMode>(SETTINGS.trees),
+    scenery: await plugin.settings.getSetting<boolean>(SETTINGS.scenery),
+    codeOpacity: await plugin.settings.getSetting<number>(SETTINGS.codeOpacity),
+    petals: await plugin.settings.getSetting<boolean>(SETTINGS.petals),
+    petalDensity: await plugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
+    petalSpeed: await plugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
+  });
+}
 
 async function onActivate(plugin: ReactRNPlugin) {
   try {
@@ -125,15 +154,7 @@ async function registerEverything(plugin: ReactRNPlugin) {
   // Re-runs whenever any of these settings changes, which is what makes the
   // dropdowns feel live rather than needing a reload.
   plugin.track(async (reactivePlugin) => {
-    const options = normalizeOptions({
-      shade: await reactivePlugin.settings.getSetting<string>(SETTINGS.shade),
-      trees: await reactivePlugin.settings.getSetting<TreeMode>(SETTINGS.trees),
-      scenery: await reactivePlugin.settings.getSetting<boolean>(SETTINGS.scenery),
-      codeOpacity: await reactivePlugin.settings.getSetting<number>(SETTINGS.codeOpacity),
-      petals: await reactivePlugin.settings.getSetting<boolean>(SETTINGS.petals),
-      petalDensity: await reactivePlugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
-      petalSpeed: await reactivePlugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
-    });
+    const options = await readOptions(reactivePlugin as ReactRNPlugin);
 
     const css = compose(options);
     await reactivePlugin.app.registerCSS(CSS_KEY, css);
@@ -150,6 +171,23 @@ async function registerEverything(plugin: ReactRNPlugin) {
       source: 'settings.getSetting',
       cssKey: CSS_KEY,
     });
+  });
+
+  await plugin.app.registerCommand({
+    id: 'sakura-show-settings',
+    name: 'Sakura: Show current settings',
+    description: 'Report the values actually in use, for when the theme does not look like the settings say it should',
+    action: async () => {
+      // Settings persist independently of the code's defaults, so what is
+      // stored and what the source says are not the same question. This
+      // reports the former without needing the developer console.
+      const options = await readOptions(plugin);
+      const summary =
+        `shade ${options.shade} | branches ${options.trees} | shop ${options.scenery ? 'on' : 'off'} | ` +
+        `code ${options.codeOpacity} | petals ${options.petals ? options.petalDensity : 'off'}`;
+      await plugin.app.toast(summary);
+      console.debug(`${LOG_PREFIX} current settings`, options);
+    },
   });
 
   await plugin.app.registerCommand({
