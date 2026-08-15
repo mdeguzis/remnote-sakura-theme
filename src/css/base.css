@@ -171,6 +171,28 @@ html {
   border-radius: 12px;
 }
 
+/*
+ * Code blocks.
+ *
+ * Left opaque these punch a hard rectangle straight through the scenery: the
+ * shop carries on either side of the block and simply stops where the block
+ * begins. At this alpha the artwork reads continuously behind the code while
+ * the code itself stays perfectly legible, helped by the blur underneath it.
+ */
+.rn-code-node,
+.rn-editor pre {
+  background-color: rgba(var(--sakura-elevated), 0.8);
+  backdrop-filter: blur(8px) saturate(115%);
+  border-radius: 10px;
+}
+
+/* Inline code is small and sits mid sentence, so it keeps more of a fill to
+ * stay distinguishable from the prose around it. */
+.rn-editor :not(pre) > code {
+  background-color: rgba(var(--sakura-accent-soft), 0.6);
+  border-radius: 5px;
+}
+
 .rn-button {
   border-radius: 10px;
 }

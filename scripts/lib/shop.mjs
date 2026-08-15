@@ -1,133 +1,190 @@
 /**
- * The corner scenery: a small machiya shop front with a cat sitting outside.
+ * The corner scenery: a sushi shop front with a cat sitting outside.
  *
- * Unlike the branches this is drawn by hand rather than grown from a rule.
- * Architecture has no recursive structure to exploit, and a procedural roof
- * looks like a mistake rather than a building.
+ * Drawn by hand rather than grown from a rule. Architecture has no recursive
+ * structure to exploit, and a procedural roof looks like a mistake.
  *
- * It ships as two alpha masks so it can carry two colors without spending a
- * pseudo-element it does not have:
+ * Two alpha masks, so it carries two colors without spending a pseudo-element
+ * it does not have:
  *
  *   structure  silhouette, painted in the branch wood color by html::before
  *   lights     lit openings, painted in the blossom color by html::after
  *
- * html::after sits above html::before, so anything in the lights layer lands on
- * top of the silhouette. Two consequences drive the whole drawing:
+ * html::after sits above html::before, so lights land on top of structure. Two
+ * consequences drive the drawing:
  *
- *   - The silhouette needs no holes cut in it. A lit doorway is simply a light
- *     shape placed over solid structure, so no even-odd fill paths are needed.
- *   - The noren curtain cannot be drawn as structure over the doorway glow,
- *     because structure is underneath. Instead the glow is drawn only where
- *     light would actually escape: below the curtain hem, and through the two
- *     slits between the curtain panels.
+ *   - The silhouette needs no holes cut in it. A lit doorway is a light shape
+ *     placed over solid structure, so no even-odd fill paths are needed.
+ *   - The noren cannot be structure drawn over the doorway glow, because
+ *     structure is underneath. The glow is drawn only where light escapes:
+ *     below the curtain hem and through the gaps between panels.
  *
- * The cat sits clear of the building. Drawn overlapping it, it is the same
- * color as the wall behind it and simply disappears.
+ * Anything meant to be seen must sit clear of the wall behind it. Drawn over
+ * the building it is the same color as the building and vanishes.
  */
 
-const VIEW_W = 460;
-const VIEW_H = 340;
+const VIEW_W = 700;
+const VIEW_H = 380;
 
 /** Ground line. Everything stands on this. */
-const GROUND = 306;
+const GROUND = 340;
 
-/** Doorway extents, shared by the structure and the light that escapes it. */
-const DOOR = { left: 116, right: 212, top: 186 };
+/**
+ * The shop is a large solid mass, unlike the branches which are thin traceries.
+ * At the same layer opacity it reads as a heavy block sitting on the interface,
+ * which is what it looked like behind a code block.
+ *
+ * Because these are alpha masks, the fix belongs in the artwork rather than in
+ * the CSS: drawing at reduced alpha makes the scenery recede while leaving the
+ * branch layer free to stay bold. The two cannot be separated in CSS, since
+ * they share one element and therefore one opacity.
+ */
+const STRUCTURE_ALPHA = 0.58;
+const LIGHT_ALPHA = 0.5;
 
-/** Curtain hem. Light escapes below this and through the panel gaps. */
-const NOREN_HEM = 236;
+/** Shop front extents. */
+const SHOP = { left: 50, right: 500 };
+const SIGN = { top: 106, bottom: 152 };
+
+/** Noren curtain over the counter opening. */
+const NOREN = { left: 140, right: 330, top: 165, hem: 225 };
+
+/** Glazed display counter under the curtain. */
+const COUNTER = { top: 225, bottom: 282 };
+
+/** Lattice sliding door. */
+const DOOR = { left: 352, right: 470, top: 165 };
 
 function structure() {
   const parts = [];
 
-  // Roof. The concave sweep into flared eaves is what reads as Japanese
+  // Tiled roof. The concave sweep into flared eaves is what reads as Japanese
   // rather than as a generic gable.
   parts.push(
-    '<path d="M6,150 C44,146 62,130 72,100 L112,72 L246,72 L286,100 ' +
-      'C296,130 314,146 352,150 L352,160 L6,160 Z"/>'
+    '<path d="M8,104 C52,100 74,84 86,52 L140,30 L410,30 L464,52 ' +
+      'C476,84 498,100 542,104 L542,118 L8,118 Z"/>'
   );
 
-  // Thinner second eave, which gives the roof its tiled depth.
-  parts.push('<path d="M30,166 L328,166 L320,180 L38,180 Z"/>');
+  // Tile ridges along the roof face. Evenly spaced verticals are enough to
+  // read as tiling at this size.
+  //
+  // Kept inside the flat span of the roof (x 140 to 410). Run wider and the
+  // outer ridges rise past the sloping eave and stick out of the silhouette as
+  // little tabs, which is what the first draft did.
+  for (let x = 152; x < 404; x += 26) {
+    parts.push(`<rect x="${x}" y="38" width="5" height="66" rx="2"/>`);
+  }
 
-  // Shop body and corner posts.
-  parts.push(`<path d="M46,180 L312,180 L312,${GROUND} L46,${GROUND} Z"/>`);
-  parts.push(`<rect x="38" y="174" width="15" height="${GROUND - 174}"/>`);
-  parts.push(`<rect x="305" y="174" width="15" height="${GROUND - 174}"/>`);
+  // Signboard frame above the shop front.
+  parts.push(`<rect x="${SHOP.left + 10}" y="${SIGN.top}" width="${SHOP.right - SHOP.left - 20}" height="${SIGN.bottom - SIGN.top}" rx="5"/>`);
 
-  // Doorway recess, so the lit opening has a dark frame around it.
-  parts.push(`<rect x="${DOOR.left - 8}" y="${DOOR.top - 8}" width="${DOOR.right - DOOR.left + 16}" height="${GROUND - DOOR.top + 8}"/>`);
+  // Shop body and the two corner posts.
+  parts.push(`<path d="M${SHOP.left},${SIGN.bottom} L${SHOP.right},${SIGN.bottom} L${SHOP.right},${GROUND} L${SHOP.left},${GROUND} Z"/>`);
+  parts.push(`<rect x="${SHOP.left}" y="${SIGN.bottom - 6}" width="18" height="${GROUND - SIGN.bottom + 6}"/>`);
+  parts.push(`<rect x="${SHOP.right - 18}" y="${SIGN.bottom - 6}" width="18" height="${GROUND - SIGN.bottom + 6}"/>`);
 
-  // Noren curtain across the top of the doorway.
-  parts.push(`<path d="M${DOOR.left - 4},${DOOR.top} L${DOOR.right + 4},${DOOR.top} L${DOOR.right + 4},${NOREN_HEM} L${DOOR.left - 4},${NOREN_HEM} Z"/>`);
+  // Paper lantern hanging at the left of the shop front.
+  parts.push(`<rect x="98" y="${SIGN.bottom}" width="4" height="14"/>`);
+  parts.push('<ellipse cx="100" cy="200" rx="26" ry="32"/>');
+  // Cap and base, which is what separates a lantern from an egg.
+  parts.push('<rect x="86" y="166" width="28" height="7" rx="3"/>');
+  parts.push('<rect x="86" y="227" width="28" height="7" rx="3"/>');
 
-  // Window frame, left of the door.
-  parts.push('<rect x="60" y="196" width="48" height="56" rx="3"/>');
+  // Noren curtain across the counter opening.
+  parts.push(`<rect x="${NOREN.left - 6}" y="${NOREN.top}" width="${NOREN.right - NOREN.left + 12}" height="${NOREN.hem - NOREN.top}"/>`);
 
-  // Vertical sign board, standing just outside the left post.
-  parts.push('<rect x="10" y="186" width="24" height="98" rx="4"/>');
+  // Counter frame, and the solid base cabinet below the glass.
+  parts.push(`<rect x="${NOREN.left - 6}" y="${COUNTER.top}" width="${NOREN.right - NOREN.left + 12}" height="${COUNTER.bottom - COUNTER.top}" rx="3"/>`);
+  parts.push(`<rect x="${NOREN.left - 10}" y="${COUNTER.bottom}" width="${NOREN.right - NOREN.left + 20}" height="${GROUND - COUNTER.bottom}"/>`);
 
-  // Lantern hanging from the right eave.
-  parts.push('<rect x="284" y="180" width="4" height="14"/>');
-  parts.push('<ellipse cx="286" cy="210" rx="15" ry="19"/>');
+  // Lattice sliding door. Frame first, then the muntins that make it lattice.
+  parts.push(`<rect x="${DOOR.left}" y="${DOOR.top}" width="${DOOR.right - DOOR.left}" height="${GROUND - DOOR.top}" rx="3"/>`);
 
-  // A potted plant, standing OUTSIDE the right post. Drawn against the wall it
-  // is the same color as the wall and disappears, exactly like the cat does.
-  parts.push(`<path d="M328,${GROUND} L332,284 L354,284 L358,${GROUND} Z"/>`);
-  parts.push('<circle cx="336" cy="274" r="10"/>');
-  parts.push('<circle cx="351" cy="272" r="9"/>');
-  parts.push('<circle cx="344" cy="264" r="11"/>');
+  // Left potted plant.
+  parts.push(`<path d="M14,${GROUND} L18,306 L46,306 L50,${GROUND} Z"/>`);
+  parts.push('<circle cx="22" cy="294" r="11"/>');
+  parts.push('<circle cx="42" cy="292" r="10"/>');
+  parts.push('<circle cx="32" cy="282" r="12"/>');
+
+  // Bamboo at the right of the shop.
+  for (const [x, top] of [
+    [512, 214],
+    [526, 236],
+  ]) {
+    parts.push(`<rect x="${x}" y="${top}" width="7" height="${GROUND - top}" rx="3"/>`);
+    parts.push(`<ellipse cx="${x - 9}" cy="${top + 22}" rx="12" ry="5"/>`);
+    parts.push(`<ellipse cx="${x + 16}" cy="${top + 44}" rx="12" ry="5"/>`);
+  }
+
+  // A-frame sign standing on the pavement.
+  parts.push(`<path d="M548,${GROUND} L562,264 L596,264 L610,${GROUND} Z"/>`);
+  parts.push('<rect x="556" y="258" width="46" height="8" rx="3"/>');
 
   // Ground line, running past the frame so it does not stop in mid air.
-  parts.push(`<rect x="0" y="${GROUND}" width="${VIEW_W}" height="7"/>`);
+  parts.push(`<rect x="0" y="${GROUND}" width="${VIEW_W}" height="8"/>`);
 
-  // The cat, sitting on the ground clear of the shop and facing it.
-  const catX = 388;
-  parts.push(`<path d="M${catX - 27},${GROUND} C${catX - 27},274 ${catX - 15},258 ${catX},258 C${catX + 15},258 ${catX + 27},274 ${catX + 27},${GROUND} Z"/>`);
-  parts.push(`<circle cx="${catX}" cy="248" r="17"/>`);
-  // Ears.
-  parts.push(`<path d="M${catX - 14},241 L${catX - 13},222 L${catX},235 Z"/>`);
-  parts.push(`<path d="M${catX + 14},241 L${catX + 13},222 L${catX},235 Z"/>`);
-  // Tail, curling away from the shop.
+  // The cat, sitting on the pavement clear of everything and facing the shop.
+  const catX = 652;
   parts.push(
-    `<path d="M${catX + 25},300 C${catX + 50},302 ${catX + 56},276 ${catX + 40},264" ` +
+    `<path d="M${catX - 28},${GROUND} C${catX - 28},306 ${catX - 16},290 ${catX},290 ` +
+      `C${catX + 16},290 ${catX + 28},306 ${catX + 28},${GROUND} Z"/>`
+  );
+  parts.push(`<circle cx="${catX}" cy="279" r="18"/>`);
+  parts.push(`<path d="M${catX - 15},271 L${catX - 14},251 L${catX},265 Z"/>`);
+  parts.push(`<path d="M${catX + 15},271 L${catX + 14},251 L${catX},265 Z"/>`);
+  parts.push(
+    `<path d="M${catX + 26},334 C${catX + 46},336 ${catX + 50},312 ${catX + 36},300" ` +
       'fill="none" stroke="#000" stroke-width="9" stroke-linecap="round"/>'
   );
 
-  return parts.join('');
+  return `<g fill-opacity="${STRUCTURE_ALPHA}" stroke-opacity="${STRUCTURE_ALPHA}">${parts.join('')}</g>`;
 }
 
 function lights() {
   const parts = [];
 
-  // Light escaping below the curtain hem.
-  parts.push(`<rect x="${DOOR.left}" y="${NOREN_HEM}" width="${DOOR.right - DOOR.left}" height="${GROUND - NOREN_HEM}"/>`);
+  // Signboard face, inset so a frame of silhouette remains around it.
+  parts.push(`<rect x="${SHOP.left + 18}" y="${SIGN.top + 8}" width="${SHOP.right - SHOP.left - 36}" height="${SIGN.bottom - SIGN.top - 16}" rx="3"/>`);
 
-  // Two slits of light between the three curtain panels. These are what make
-  // the curtain read as hanging cloth rather than a closed shutter.
-  parts.push(`<rect x="${DOOR.left + 30}" y="${DOOR.top + 6}" width="5" height="${NOREN_HEM - DOOR.top - 6}"/>`);
-  parts.push(`<rect x="${DOOR.left + 63}" y="${DOOR.top + 6}" width="5" height="${NOREN_HEM - DOOR.top - 6}"/>`);
+  // Lantern glow, inset for the same reason.
+  parts.push('<ellipse cx="100" cy="200" rx="19" ry="25"/>');
 
-  // Lit window panes, as four lattice squares rather than one block.
-  for (const [x, y] of [
-    [66, 202],
-    [89, 202],
-    [66, 226],
-    [89, 226],
-  ]) {
-    parts.push(`<rect x="${x}" y="${y}" width="17" height="18" rx="2"/>`);
+  // Light escaping between the noren panels. Four panels, three gaps. The gaps
+  // are what make it read as hanging cloth rather than a shutter.
+  const panelSpan = NOREN.right - NOREN.left;
+  for (let i = 1; i <= 3; i++) {
+    parts.push(
+      `<rect x="${NOREN.left + (panelSpan / 4) * i - 3}" y="${NOREN.top + 6}" width="6" height="${NOREN.hem - NOREN.top - 6}"/>`
+    );
   }
 
-  // Lantern glow, inset so a rim of silhouette remains around it.
-  parts.push('<ellipse cx="286" cy="210" rx="10" ry="13"/>');
+  // The glazed counter, lit from inside.
+  parts.push(`<rect x="${NOREN.left}" y="${COUNTER.top + 6}" width="${panelSpan}" height="${COUNTER.bottom - COUNTER.top - 12}" rx="2"/>`);
 
-  // Sign face, inset from the board for the same reason.
-  parts.push('<rect x="15" y="192" width="14" height="86" rx="3"/>');
+  // Lattice door panes. A grid of lit squares reads as paper and glass, where
+  // one lit rectangle would just look like a hole.
+  const cols = 4;
+  const rows = 5;
+  const padding = 10;
+  const paneW = (DOOR.right - DOOR.left - padding * 2 - (cols - 1) * 6) / cols;
+  const paneH = (GROUND - DOOR.top - padding * 2 - (rows - 1) * 6) / rows;
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      parts.push(
+        `<rect x="${(DOOR.left + padding + c * (paneW + 6)).toFixed(1)}" ` +
+          `y="${(DOOR.top + padding + r * (paneH + 6)).toFixed(1)}" ` +
+          `width="${paneW.toFixed(1)}" height="${paneH.toFixed(1)}" rx="2"/>`
+      );
+    }
+  }
 
-  // The cat's eye. One dot, and the whole scene reads as alive.
-  parts.push('<circle cx="381" cy="247" r="3.4"/>');
+  // A-frame sign face.
+  parts.push('<path d="M560,330 L570,274 L590,274 L600,330 Z"/>');
 
-  return parts.join('');
+  // The cat's eye. One dot, and the scene reads as alive.
+  parts.push('<circle cx="645" cy="278" r="3.6"/>');
+
+  return `<g fill-opacity="${LIGHT_ALPHA}">${parts.join('')}</g>`;
 }
 
 function wrap(body) {

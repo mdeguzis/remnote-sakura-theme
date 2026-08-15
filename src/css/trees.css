@@ -48,8 +48,8 @@ html::before {
     var(--sakura-branch-bottom-left-wood), var(--sakura-scenery-shop-structure);
   mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
   -webkit-mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
-  mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
-  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
+  mask-size: 46vw auto, 40vw auto, 34vw auto, 26vw auto;
+  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 26vw auto;
 }
 
 /* Layer two: the blossoms, in their own color and slightly stronger, since the
@@ -62,8 +62,8 @@ html::after {
     var(--sakura-branch-bottom-left-blossoms), var(--sakura-scenery-shop-lights);
   mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
   -webkit-mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
-  mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
-  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
+  mask-size: 46vw auto, 40vw auto, 34vw auto, 26vw auto;
+  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 26vw auto;
   opacity: calc(var(--sakura-tree-opacity) * 1.25);
 }
 
@@ -74,8 +74,8 @@ html::after {
 @media (max-width: 900px) {
   html::before,
   html::after {
-    mask-size: 62vw auto, 56vw auto, 0 0, 46vw auto;
-    -webkit-mask-size: 62vw auto, 56vw auto, 0 0, 46vw auto;
+    mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
+    -webkit-mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
   }
 }
 
