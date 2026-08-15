@@ -120,6 +120,18 @@ scripts/           Art generation and the two builds
 
 The artwork is grown from a seeded recursive rule rather than drawn by hand, so it is deterministic: regenerating produces byte identical files. Tune the shape by changing a number in `scripts/gen-art.mjs` and run `npm run art`.
 
+## Versioning
+
+Every change that ships bumps the version, including fixes and internal work.
+That is deliberately stricter than the usual convention of bumping only on
+user-facing releases: a build here can be identified by its version alone, which
+matters when the thing being debugged is a stylesheet someone pasted three
+builds ago.
+
+`package.json` is the source of truth. The theme manifest is generated from it;
+the plugin manifest in `public/` is written by hand, and a test asserts the two
+agree and that the changelog has an entry for the current version.
+
 ## Credits
 
 Class names and design tokens come from RemNote's [Custom CSS documentation](https://plugins.remnote.com/custom-css).
