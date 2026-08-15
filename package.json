@@ -3,6 +3,7 @@
   "name": "remnote-sakura-theme",
   "version": "0.1.0",
   "license": "MIT",
+  "type": "module",
   "description": "Cherry blossom theme for RemNote. Branches behind a translucent interface, with optional falling petals.",
   "scripts": {
     "clean": "shx rm -rf build dist *.zip src/lib/assets.generated.ts src/lib/css.generated.ts",
