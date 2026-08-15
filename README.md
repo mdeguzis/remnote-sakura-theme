@@ -39,12 +39,14 @@ Only in the plugin build. Settings, Plugins, Sakura.
 | Shade | Hanami, Yozakura, Yuzakura, Shirayuki | Hanami |
 | Blossom branches | Off, Subtle, Normal, Bold | Bold |
 | Corner shop | On, Off | On |
-| Code block opacity | 0 to 100 | 80 |
+| Panel opacity | 0 to 100 | 75 |
 | Falling petals | On, Off | **Off** |
 | Petal density | Sparse, Gentle, Heavy | Gentle |
 | Petal speed | Slow, Drifting, Brisk | Drifting |
 
-Code block opacity is a taste setting rather than a default worth arguing over. A code block sitting on top of the scenery either hides it, or lets it through muted so the drawing steps in brightness at the block edge and stops reading as one object. Lower the number to see more of the shop, raise it for flatter, easier code.
+Panel opacity controls how solid the inset surfaces are: code blocks, the editor container, and anything else RemNote insets. It drives `--current-background-color`, which is the variable RemNote actually paints those with.
+
+At 0 the panel disappears and content sits directly on the scenery. At 100 it is solid and hides the artwork behind it. In between is a frosted panel, which is where the default sits. Lower it to see more of the branches and the shop, raise it for flatter and easier reading.
 
 Petals are off by default. Continuous motion behind text is charming for a day and irritating by the third, so you opt in. If your system asks for reduced motion the petals stay visible but stop moving, even when you have turned them on.
 

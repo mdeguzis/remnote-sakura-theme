@@ -12,11 +12,13 @@ export interface SakuraOptions {
   /**
    * Opacity of code blocks, as a percentage.
    *
-   * This drives `--current-background-color`, which is what RemNote actually
-   * paints code blocks and the editor container with. At 0 there is no panel at
-   * all and code sits directly on the scenery; at 100 the panel is solid and
-   * hides it. In between is a frosted panel with the artwork reading softly
-   * through, which is what most people want and what the default is set to.
+   * Drives `--current-background-color`, which RemNote paints code blocks, the
+   * editor container and other inset surfaces with. Named `codeOpacity` for
+   * history; it governs every panel that variable reaches.
+   *
+   * At 0 there is no panel at all and content sits directly on the scenery. At
+   * 100 the panel is solid and hides it. In between is a frosted panel with the
+   * artwork reading softly through.
    */
   codeOpacity: number;
   petals: boolean;
@@ -34,7 +36,7 @@ export const DEFAULT_OPTIONS: SakuraOptions = {
   shade: 'hanami',
   trees: 'bold',
   scenery: true,
-  codeOpacity: 65,
+  codeOpacity: 75,
   petals: false,
   petalDensity: 'gentle',
   petalSpeed: 'drifting',

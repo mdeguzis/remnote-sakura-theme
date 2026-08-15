@@ -16,7 +16,7 @@ export const SETTINGS = {
   shade: 'shade',
   trees: 'trees',
   scenery: 'scenery',
-  codeOpacity: 'code-opacity-v3',
+  codeOpacity: 'panel-opacity-v4',
   petals: 'petals',
   petalDensity: 'petal-density',
   petalSpeed: 'petal-speed',

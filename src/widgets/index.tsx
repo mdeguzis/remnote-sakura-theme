@@ -79,9 +79,9 @@ async function registerEverything(plugin: ReactRNPlugin) {
 
   await plugin.settings.registerNumberSetting({
     id: SETTINGS.codeOpacity,
-    title: 'Code block opacity',
+    title: 'Panel opacity',
     description:
-      'How solid code blocks are, from 0 to 100. Lower lets more of the scenery through behind them, higher keeps code easier to read. 80 is the default.',
+      'How solid the inset panels are, from 0 to 100. Affects code blocks, the editor container and other surfaces RemNote insets. Lower lets more of the branches and the shop through, higher keeps text flatter and easier to read. 0 removes the panel entirely, 100 makes it solid. Default is 75.',
     defaultValue: DEFAULT_OPTIONS.codeOpacity,
   });
 
