@@ -6,9 +6,10 @@
  * through. Keeping the channels separate lets the CSS write
  * `rgba(var(--sakura-bg), 0.72)` and vary the alpha per surface from one value.
  *
- * Every shade defines both a light and a dark palette. RemNote puts a `dark`
- * class on the root element and the user can switch at any time, so a shade
- * that only defined one would leave half the app unstyled.
+ * Every shade defines both a light and a dark palette. RemNote applies a `dark`
+ * class when dark mode is on, not necessarily to the root element, and the user
+ * can switch at any time, so a shade that only defined one palette would leave
+ * half the app unstyled. See compose.ts for how that selector is handled.
  */
 
 export interface Palette {
@@ -45,15 +46,15 @@ export const SHADES: Shade[] = [
     name: 'Hanami',
     description: 'Pale blush under an overcast spring sky. The default.',
     light: {
-      bgTop: '253, 243, 246',
-      bgBottom: '248, 234, 240',
-      surface: '252, 240, 244',
-      elevated: '255, 251, 253',
-      text: '58, 42, 50',
-      textMuted: '134, 108, 120',
-      accent: '214, 108, 150',
-      accentSoft: '246, 214, 228',
-      border: '234, 208, 219',
+      bgTop: '248, 228, 236',
+      bgBottom: '240, 212, 224',
+      surface: '245, 222, 232',
+      elevated: '254, 246, 249',
+      text: '48, 32, 40',
+      textMuted: '118, 90, 104',
+      accent: '196, 78, 126',
+      accentSoft: '240, 200, 218',
+      border: '224, 190, 206',
       wood: '104, 74, 68',
       blossom: '242, 160, 191',
       petal: '243, 176, 201',
@@ -78,15 +79,15 @@ export const SHADES: Shade[] = [
     name: 'Yozakura',
     description: 'Night blossoms. Deep indigo and plum with lantern pink.',
     light: {
-      bgTop: '240, 238, 250',
-      bgBottom: '232, 228, 246',
-      surface: '238, 234, 249',
-      elevated: '250, 248, 255',
-      text: '44, 38, 66',
-      textMuted: '116, 106, 148',
-      accent: '158, 106, 194',
-      accentSoft: '228, 214, 246',
-      border: '218, 210, 240',
+      bgTop: '232, 227, 246',
+      bgBottom: '221, 214, 240',
+      surface: '229, 222, 244',
+      elevated: '248, 245, 254',
+      text: '36, 30, 58',
+      textMuted: '100, 90, 134',
+      accent: '138, 82, 180',
+      accentSoft: '219, 202, 242',
+      border: '206, 196, 232',
       wood: '84, 70, 104',
       blossom: '212, 154, 208',
       petal: '218, 166, 214',
@@ -111,15 +112,15 @@ export const SHADES: Shade[] = [
     name: 'Yuzakura',
     description: 'Evening bloom. Warm coral and peach at golden hour.',
     light: {
-      bgTop: '255, 246, 240',
-      bgBottom: '253, 236, 228',
-      surface: '254, 242, 236',
-      elevated: '255, 252, 249',
-      text: '62, 44, 38',
-      textMuted: '142, 112, 98',
-      accent: '224, 122, 104',
-      accentSoft: '252, 220, 208',
-      border: '242, 216, 204',
+      bgTop: '253, 236, 226',
+      bgBottom: '249, 222, 208',
+      surface: '252, 232, 221',
+      elevated: '255, 249, 244',
+      text: '52, 35, 29',
+      textMuted: '128, 96, 82',
+      accent: '206, 96, 76',
+      accentSoft: '248, 208, 190',
+      border: '236, 204, 188',
       wood: '112, 76, 60',
       blossom: '248, 168, 150',
       petal: '250, 182, 162',
@@ -144,15 +145,15 @@ export const SHADES: Shade[] = [
     name: 'Shirayuki',
     description: 'Almost white. Blossoms barely tinted, for reading all day.',
     light: {
-      bgTop: '252, 250, 251',
-      bgBottom: '246, 243, 245',
-      surface: '249, 246, 248',
-      elevated: '255, 255, 255',
-      text: '46, 42, 45',
-      textMuted: '124, 116, 122',
-      accent: '196, 130, 158',
-      accentSoft: '242, 230, 236',
-      border: '230, 224, 228',
+      bgTop: '247, 242, 245',
+      bgBottom: '239, 232, 236',
+      surface: '244, 238, 241',
+      elevated: '253, 251, 252',
+      text: '38, 34, 37',
+      textMuted: '110, 101, 107',
+      accent: '178, 104, 136',
+      accentSoft: '236, 220, 229',
+      border: '222, 213, 218',
       wood: '118, 104, 108',
       blossom: '232, 202, 214',
       petal: '236, 212, 222',

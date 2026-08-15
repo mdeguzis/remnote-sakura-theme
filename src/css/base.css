@@ -97,6 +97,45 @@ html {
   backdrop-filter: blur(6px);
 }
 
+/*
+ * Sidebar rows.
+ *
+ * RemNote publishes no stable class for the selected navigation row, so the
+ * active item keeps its default neutral grey and reads as unthemed next to
+ * everything else.
+ *
+ * These rules tint whatever background utility the row is using, scoped inside
+ * .rn-sidebar so nothing else in the app is caught. The accent alpha is low
+ * enough that the branch behind the sidebar still shows through the highlight.
+ *
+ * Provisional: if RemNote changes which utility the active row uses, this stops
+ * matching and the row goes back to grey. It cannot break anything else.
+ */
+.rn-sidebar .rn-clr-background-elevation-5,
+.rn-sidebar .rn-clr-background-elevation-10,
+.rn-sidebar .rn-clr-background-elevation-15,
+.rn-sidebar .rn-clr-background-elevation-20,
+.rn-sidebar [aria-selected='true'],
+.rn-sidebar [data-selected='true'] {
+  background-color: rgba(var(--sakura-accent), 0.26);
+  /* The sidebar already blurs. Blurring the row again muddies the branch. */
+  backdrop-filter: none;
+}
+
+.rn-sidebar a:hover,
+.rn-sidebar [role='button']:hover,
+.rn-sidebar [role='treeitem']:hover {
+  background-color: rgba(var(--sakura-accent), 0.14);
+  border-radius: 8px;
+}
+
+/* The flashcard count pill lives in the sidebar too, and should not pick up the
+ * active row treatment. */
+.rn-sidebar-counter {
+  background-color: rgba(var(--sakura-accent-soft), 0.9);
+  color: rgb(var(--sakura-text));
+}
+
 .rn-doc-title {
   color: rgb(var(--sakura-text));
   letter-spacing: -0.015em;
