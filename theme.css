@@ -109,7 +109,7 @@ html {
 .rn-sidebar,
 .rn-document-sidebar,
 .rn-left-sidebar {
-  background-color: rgba(var(--sakura-surface), 0.52);
+  background-color: rgba(var(--sakura-surface), 0.78);
   backdrop-filter: blur(6px);
 }
 .rn-sidebar .rn-clr-background-primary,
@@ -169,7 +169,15 @@ html {
   border-radius: 12px;
 }
 .rn-code-node,
-.rn-editor pre {
+.rn-editor pre,
+.rn-code-node .cm-editor,
+.rn-code-node .cm-scroller,
+.rn-code-node .cm-gutters,
+.rn-editor .cm-editor,
+.rn-editor .cm-scroller,
+.rn-editor .cm-gutters,
+.rn-code-node [class*='language-'],
+.rn-editor pre[class*='language-'] {
   background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
   backdrop-filter: var(--sakura-code-blur);
   border-radius: 10px;
