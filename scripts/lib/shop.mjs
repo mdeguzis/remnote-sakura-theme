@@ -44,11 +44,27 @@ const GROUND = 356;
  * They share one element and therefore one opacity, so this cannot be separated
  * in CSS. Because these are alpha masks, the fix belongs in the artwork.
  */
-const STRUCTURE_ALPHA = 0.58;
-const LIGHT_ALPHA = 0.5;
-
-/** Detail on a lit panel has to out-shine the panel to be visible at all. */
-const DETAIL_ALPHA = 0.92;
+/*
+ * These are balanced against each other, not chosen independently.
+ *
+ * The blossom layer is painted at 1.25x the branch layer opacity, so a light
+ * drawn at alpha a ends up 1.25a on screen while structure ends up 1.0a. With
+ * structure at 0.58 and detail at 0.92 the details landed twice as strong as
+ * the building they sit on. That is invisible at full strength, but anything
+ * translucent laid over the top fades the weak layer out first, so under a code
+ * block the building vanished and left the lattice panes and the sign face
+ * floating on their own.
+ *
+ * Keeping effective weights close means the whole shop fades together and goes
+ * on reading as one object at any opacity above it.
+ *
+ *   structure  0.70 x 1.00 = 0.70
+ *   lights     0.42 x 1.25 = 0.53
+ *   detail     0.60 x 1.25 = 0.75
+ */
+const STRUCTURE_ALPHA = 0.7;
+const LIGHT_ALPHA = 0.42;
+const DETAIL_ALPHA = 0.6;
 
 const SHOP = { left: 70, right: 520 };
 const ROOF = { left: 24, right: 566, top: 24, eave: 112 };
