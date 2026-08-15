@@ -7,7 +7,34 @@ const { EsbuildPlugin } = require('esbuild-loader');
 const { ProvidePlugin, BannerPlugin } = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 
+const { execFileSync } = require('child_process');
+
 const isProd = process.env.NODE_ENV === 'production';
+
+/**
+ * Re-inline assets/ and src/css/ before every compile.
+ *
+ * Those directories are the real source, but the bundle imports them through
+ * generated modules that only exist because a build step wrote them. Without
+ * this, editing a stylesheet fragment or a piece of artwork during npm run dev
+ * does nothing at all: webpack sees no change, because the file it actually
+ * imports has not been touched. The fix looks like "the dev server is broken"
+ * rather than "you need to run another command".
+ */
+class InlineSourcesPlugin {
+  apply(compiler) {
+    compiler.hooks.beforeCompile.tap('InlineSourcesPlugin', () => {
+      try {
+        execFileSync('node', [resolve(__dirname, 'scripts/build-sources.mjs')], { stdio: 'inherit' });
+      } catch (error) {
+        // Do not take the whole dev server down for one bad edit. The compile
+        // continues against the previous generated modules and the next save
+        // gets another attempt.
+        console.error('[webpack] failed to inline sources:', error.message);
+      }
+    });
+  }
+}
 
 // RemNote loads each widget twice: once directly and once inside a sandboxed
 // iframe. Both bundles come from the same entry file.
@@ -83,6 +110,7 @@ const config = {
     // manifest.json has to land at the server root. RemNote's "Develop from
     // localhost" dialog fetches http://localhost:8080/manifest.json first, and
     // reports a network error if it is missing.
+    new InlineSourcesPlugin(),
     new CopyPlugin({
       patterns: [
         { from: 'public', to: '' },
@@ -105,7 +133,9 @@ if (isProd) {
     open: false,
     hot: true,
     compress: true,
-    watchFiles: ['src/**/*', 'public/**/*'],
+    // assets and src/css are watched explicitly: they are not imported by the
+    // bundle directly, only through the generated modules.
+    watchFiles: ['src/**/*', 'public/**/*', 'assets/**/*', 'scripts/**/*'],
     // RemNote runs on remnote.com (or in Electron) and fetches this server
     // cross-origin, so both of these are required or the manifest fetch fails.
     headers: {
