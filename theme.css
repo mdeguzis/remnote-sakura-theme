@@ -173,7 +173,7 @@ html {
   backdrop-filter: blur(8px) saturate(115%);
   border-radius: 10px;
 
-  border: 1px solid rgba(var(--sakura-border), 0.75);
+  border: 1px solid rgba(var(--sakura-border), 0.5);
 }
 .rn-editor :not(pre) > code {
   background-color: rgba(var(--sakura-accent-soft), 0.6);
@@ -200,13 +200,18 @@ html {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--sakura-accent), 0.3);
+  background-color: rgba(var(--sakura-accent), 0.2);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(var(--sakura-accent), 0.5);
+  background-color: rgba(var(--sakura-accent), 0.4);
+  background-clip: content-box;
+}
+.rn-code-node::-webkit-scrollbar-thumb,
+.rn-editor pre::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--sakura-text-muted), 0.28);
   background-clip: content-box;
 }
 

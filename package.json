@@ -24,7 +24,7 @@
     "build:plugin": "npm run sources && npx remnote-plugin validate && shx rm -rf dist && shx rm -f SakuraPlugin.zip && cross-env NODE_ENV=production webpack --color && shx cp README.md dist && cd dist && bestzip ../SakuraPlugin.zip ./*",
     "build": "npm run build:theme && npm run build:plugin",
     "art:icon": "node scripts/gen-icon.mjs",
-    "css:copy": "npm run sources --silent && node scripts/copy-css.mjs",
+    "css:copy": "npm run sources --silent && node scripts/build-theme.mjs && node scripts/copy-css.mjs",
     "test:contrast": "node --test tests/contrast.test.mjs"
   },
   "dependencies": {

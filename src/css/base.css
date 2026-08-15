@@ -211,8 +211,9 @@ html {
   backdrop-filter: blur(8px) saturate(115%);
   border-radius: 10px;
   /* At a low opacity the fill alone stops marking where the block starts and
-   * ends, so the edge is drawn explicitly instead of relying on the fill. */
-  border: 1px solid rgba(var(--sakura-border), 0.75);
+   * ends, so the edge is drawn explicitly instead of relying on the fill. Kept
+   * faint: it is there to bound the block, not to outline it. */
+  border: 1px solid rgba(var(--sakura-border), 0.5);
 }
 
 /* Inline code is small and sits mid sentence, so it keeps more of a fill to
@@ -242,7 +243,14 @@ html {
   border-radius: 999px;
 }
 
-/* Scrollbars are a small thing that gives away an unfinished theme. */
+/*
+ * Scrollbars are a small thing that gives away an unfinished theme.
+ *
+ * Tinted with the accent, but at a low alpha on purpose. The accent is a
+ * saturated cherry, and at the 0.3 this used to sit at every scrollable region
+ * grew a bright red stripe down its edge, which read as part of the interface
+ * being broken rather than as a scrollbar.
+ */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -251,12 +259,20 @@ html {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--sakura-accent), 0.3);
+  background-color: rgba(var(--sakura-accent), 0.2);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(var(--sakura-accent), 0.5);
+  background-color: rgba(var(--sakura-accent), 0.4);
+  background-clip: content-box;
+}
+
+/* Inside a code block the bar sits against a pale panel with the scenery behind
+ * it, so it needs to be quieter still. */
+.rn-code-node::-webkit-scrollbar-thumb,
+.rn-editor pre::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--sakura-text-muted), 0.28);
   background-clip: content-box;
 }
