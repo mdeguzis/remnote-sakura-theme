@@ -1,7 +1,8 @@
-import { declareIndexPlugin, ReactRNPlugin } from '@remnote/plugin-sdk';
+import { declareIndexPlugin, ReactRNPlugin, WidgetLocation } from '@remnote/plugin-sdk';
 
 import { compose } from '../lib/compose.ts';
 import { SHADES } from '../lib/palettes.ts';
+import { SETTINGS, readOptions } from '../lib/settings.ts';
 import {
   DEFAULT_OPTIONS,
   PETAL_DENSITIES,
@@ -17,27 +18,6 @@ const LOG_PREFIX = '[sakura]';
 
 /** The registerCSS id this plugin owns. Re-registering it replaces the sheet. */
 const CSS_KEY = 'sakura-theme';
-
-const SETTINGS = {
-  shade: 'shade',
-  trees: 'trees',
-  scenery: 'scenery',
-  petals: 'petals',
-  /*
-   * Deliberately versioned.
-   *
-   * RemNote persists a setting the first time it is seen, and defaultValue
-   * never applies again. Anyone who installed while the default was 55 kept 55
-   * through every rebuild, so changing the default in code reached nobody and
-   * the artifact it was meant to remove stayed on screen.
-   *
-   * A new id has never been seen, so the current default takes effect. Bump
-   * this suffix whenever a default has to reach existing installs.
-   */
-  codeOpacity: 'code-opacity-v2',
-  petalDensity: 'petal-density',
-  petalSpeed: 'petal-speed',
-} as const;
 
 const TREE_LABELS: Record<TreeMode, string> = {
   off: 'Off',
@@ -57,24 +37,6 @@ const SPEED_LABELS: Record<PetalSpeed, string> = {
   drifting: 'Drifting',
   brisk: 'Brisk',
 };
-
-/**
- * Read every setting and coerce it into usable options.
- *
- * Shared by the tracker and the reporting command so the two cannot disagree
- * about what is actually in effect.
- */
-async function readOptions(plugin: ReactRNPlugin) {
-  return normalizeOptions({
-    shade: await plugin.settings.getSetting<string>(SETTINGS.shade),
-    trees: await plugin.settings.getSetting<TreeMode>(SETTINGS.trees),
-    scenery: await plugin.settings.getSetting<boolean>(SETTINGS.scenery),
-    codeOpacity: await plugin.settings.getSetting<number>(SETTINGS.codeOpacity),
-    petals: await plugin.settings.getSetting<boolean>(SETTINGS.petals),
-    petalDensity: await plugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
-    petalSpeed: await plugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
-  });
-}
 
 async function onActivate(plugin: ReactRNPlugin) {
   try {
@@ -173,45 +135,18 @@ async function registerEverything(plugin: ReactRNPlugin) {
     });
   });
 
+  await plugin.app.registerWidget('debug_report', WidgetLocation.Popup, {
+    dimensions: { height: 'auto', width: 560 },
+  });
+
   await plugin.app.registerCommand({
     id: 'sakura-copy-debug',
-    name: 'Sakura: Copy debug info',
-    description: 'Put a full diagnostic on the clipboard, for pasting into a bug report',
+    name: 'Sakura: Show debug info',
+    description: 'Open a readable, copyable report of what the theme is actually doing',
     action: async () => {
-      const options = await readOptions(plugin);
-      const css = compose(options);
-
-      // The rules most likely to be wrong when the theme does not match the
-      // settings, pulled out so a report shows what was actually emitted
-      // rather than what the source says should have been.
-      const codeVars = (css.match(/--sakura-code-[\w-]+: [^;]+;/g) || []).join('\n  ');
-
-      const report = [
-        '--- sakura debug ---',
-        `options: ${JSON.stringify(options)}`,
-        `css bytes: ${css.length}`,
-        `layers: trees=${options.trees !== 'off' || options.scenery} petals=${options.petals}`,
-        'code block vars:',
-        `  ${codeVars || '(none emitted)'}`,
-        `ua: ${typeof navigator === 'undefined' ? 'unknown' : navigator.userAgent}`,
-        '--- end ---',
-      ].join('\n');
-
-      // The plugin runs in a sandboxed iframe, where the clipboard API is often
-      // unavailable. The console always works, so it is the fallback rather
-      // than the afterthought.
-      let copied = false;
-      try {
-        await navigator.clipboard.writeText(report);
-        copied = true;
-      } catch {
-        copied = false;
-      }
-
-      console.debug(`${LOG_PREFIX} debug report\n${report}`);
-      await plugin.app.toast(
-        copied ? 'Sakura debug info copied' : 'Sakura debug info written to the developer console'
-      );
+      // A popup rather than a console dump. RemNote does not surface a
+      // developer console, so writing there is the same as writing nowhere.
+      await plugin.widget.openPopup('debug_report');
     },
   });
 
