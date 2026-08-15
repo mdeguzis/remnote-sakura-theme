@@ -90,6 +90,43 @@ test('the petal loop lands on whole tiles in both axes', () => {
   }
 });
 
+test('the resting scrollbar is not tinted with the accent', () => {
+  // The accent is a saturated cherry. Used as a resting scrollbar colour it
+  // draws a bright pink bar down the edge of every scrollable region, which
+  // against a pale code block reads as something bleeding through rather than
+  // as a scrollbar. Hover is allowed: a deliberate pointer makes it a response.
+  const rules = CSS.base.split('}');
+  for (const rule of rules) {
+    if (!/::-webkit-scrollbar-thumb/.test(rule)) continue;
+    if (/:hover/.test(rule)) continue;
+    assert.doesNotMatch(
+      rule,
+      /background-color:\s*rgba\(var\(--sakura-accent\)/,
+      `resting scrollbar uses the accent: ${rule.trim().slice(0, 90)}`
+    );
+  }
+});
+
+test('code block scrollbar rules use a descendant combinator', () => {
+  // ".rn-code-node::-webkit-scrollbar-thumb" styles the scrollbar of that
+  // element itself, but the element that actually scrolls is CodeMirror's
+  // .cm-scroller inside it. Written without the space the rule matches nothing
+  // and the bar silently falls through to the global tint.
+  const selectors = CSS.base
+    .split('}')
+    .map((rule) => rule.split('{')[0])
+    .filter((selector) => /scrollbar-thumb/.test(selector) && /rn-code-node|cm-editor/.test(selector));
+
+  assert.ok(selectors.length > 0, 'no code block scrollbar rule found');
+  for (const selector of selectors) {
+    assert.match(
+      selector,
+      /(rn-code-node|cm-editor)\s+::-webkit-scrollbar-thumb/,
+      `missing descendant combinator, this rule matches nothing: ${selector.trim().slice(0, 80)}`
+    );
+  }
+});
+
 test('mask layers ship the webkit prefixed property too', () => {
   // Without the prefixed form the branches vanish entirely in the engines that
   // still need it, which reads as the theme being broken rather than plain.

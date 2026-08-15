@@ -267,21 +267,46 @@ html {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+/*
+ * The resting thumb is a muted grey, not the accent.
+ *
+ * The accent is a saturated cherry. Tinted with it, every scrollable region
+ * grew a bright pink bar down its edge, and against a pale code block that read
+ * as something bleeding through rather than as a scrollbar. The accent is kept
+ * for hover, where a deliberate pointer makes the colour a response instead of
+ * decoration.
+ */
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--sakura-accent), 0.2);
+  background-color: rgba(var(--sakura-text-muted), 0.3);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(var(--sakura-accent), 0.4);
+  background-color: rgba(var(--sakura-accent), 0.45);
   background-clip: content-box;
 }
 
-/* Inside a code block the bar sits against a pale panel with the scenery behind
- * it, so it needs to be quieter still. */
-.rn-code-node::-webkit-scrollbar-thumb,
-.rn-editor pre::-webkit-scrollbar-thumb {
-  background-color: rgba(var(--sakura-text-muted), 0.28);
+/*
+ * Scrollbars inside a code block.
+ *
+ * Note the descendant combinator. `.rn-code-node::-webkit-scrollbar-thumb`
+ * styles the scrollbar of that element itself, but the element that actually
+ * scrolls is CodeMirror's `.cm-scroller` inside it, so the earlier rule never
+ * matched anything and the bar fell through to the global accent tint.
+ */
+.rn-code-node ::-webkit-scrollbar-thumb,
+.rn-editor pre ::-webkit-scrollbar-thumb,
+.cm-scroller::-webkit-scrollbar-thumb,
+.cm-editor ::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--sakura-text-muted), 0.22);
   background-clip: content-box;
+}
+
+/* The track inside a code block stays clear so the bar does not sit in a
+ * visible channel of its own. */
+.rn-code-node ::-webkit-scrollbar-track,
+.cm-scroller::-webkit-scrollbar-track,
+.cm-editor ::-webkit-scrollbar-track {
+  background: transparent;
 }
