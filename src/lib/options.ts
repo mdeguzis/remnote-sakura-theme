@@ -34,7 +34,7 @@ export const DEFAULT_OPTIONS: SakuraOptions = {
   shade: 'hanami',
   trees: 'bold',
   scenery: true,
-  codeOpacity: 80,
+  codeOpacity: 55,
   petals: false,
   petalDensity: 'gentle',
   petalSpeed: 'drifting',

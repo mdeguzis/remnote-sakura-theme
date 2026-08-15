@@ -210,6 +210,9 @@ html {
   background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
   backdrop-filter: blur(8px) saturate(115%);
   border-radius: 10px;
+  /* At a low opacity the fill alone stops marking where the block starts and
+   * ends, so the edge is drawn explicitly instead of relying on the fill. */
+  border: 1px solid rgba(var(--sakura-border), 0.75);
 }
 
 /* Inline code is small and sits mid sentence, so it keeps more of a fill to
