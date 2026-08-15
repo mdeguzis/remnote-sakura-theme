@@ -199,6 +199,22 @@ test('an out of range code opacity never emits an invalid alpha', () => {
   }
 });
 
+test('code blocks default to no fill so the scenery stays continuous', () => {
+  // Any value between the extremes shows the artwork dimmed, which steps in
+  // brightness at the block edge and stops reading as one object.
+  assert.equal(DEFAULT_OPTIONS.codeOpacity, 0);
+  const css = compose(DEFAULT_OPTIONS);
+  assert.match(css, /--sakura-code-opacity: 0\.000/);
+  assert.match(css, /--sakura-code-blur: none/);
+});
+
+test('the blur is tied to the fill', () => {
+  // Blurring at zero opacity leaves the artwork sharp outside the block and
+  // soft inside, which is the same discontinuity in another form.
+  assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 0 }), /--sakura-code-blur: none/);
+  assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 80 }), /--sakura-code-blur: blur\(/);
+});
+
 test('the extremes of the code opacity setting both work', () => {
   assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 0 }), /--sakura-code-opacity: 0\.000/);
   assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 100 }), /--sakura-code-opacity: 1\.000/);

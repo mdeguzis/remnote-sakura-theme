@@ -196,19 +196,20 @@ html {
 /*
  * Code blocks.
  *
- * These are the surfaces most likely to sit on top of the scenery, and there is
- * no value here that is right for everyone. Opaque punches a clean rectangle
- * through the drawing so the shop stops dead where the block begins. Translucent
- * lets the drawing through, but muted, so it steps in brightness at the block
- * edge and stops reading as one object.
+ * These sit on top of the scenery more than any other surface, and only the two
+ * ends of the opacity range avoid an artifact. At 0 there is no fill and the
+ * drawing behind is continuous. At 100 the block is solid and hides it cleanly.
+ * Anything in between shows the artwork dimmed, so it steps in brightness at
+ * the block edge and stops reading as one object.
  *
- * So it is a setting rather than a decision. --sakura-code-opacity comes from
- * the plugin, and the static theme bakes in the default.
+ * The blur is tied to the fill for the same reason: blurring at zero opacity
+ * would leave the artwork sharp outside the block and soft inside, which is the
+ * same discontinuity wearing a different hat.
  */
 .rn-code-node,
 .rn-editor pre {
   background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));
-  backdrop-filter: blur(8px) saturate(115%);
+  backdrop-filter: var(--sakura-code-blur);
   border-radius: 10px;
   /* At a low opacity the fill alone stops marking where the block starts and
    * ends, so the edge is drawn explicitly instead of relying on the fill. Kept

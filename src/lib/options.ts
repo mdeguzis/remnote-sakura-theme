@@ -12,11 +12,13 @@ export interface SakuraOptions {
   /**
    * Opacity of code blocks, as a percentage.
    *
-   * There is no setting of this that is right for everyone. A code block that
-   * crosses the scenery either hides it, or lets it through muted so the
-   * artwork steps in brightness where the block begins. Opaque is cleaner,
-   * transparent shows more of the drawing, and the tradeoff is a matter of
-   * taste rather than a bug to fix.
+   * Only the two ends of this range are free of artifacts. At 0 the block has
+   * no fill and the scenery behind it is continuous and whole. At 100 the block
+   * is solid and cleanly hides whatever it covers. Every value in between shows
+   * the artwork through but dimmed, so it steps in brightness at the block edge
+   * and stops reading as one object, which is the thing that kept looking wrong.
+   *
+   * Defaults to 0, because the point of this theme is the drawing.
    */
   codeOpacity: number;
   petals: boolean;
@@ -34,7 +36,7 @@ export const DEFAULT_OPTIONS: SakuraOptions = {
   shade: 'hanami',
   trees: 'bold',
   scenery: true,
-  codeOpacity: 55,
+  codeOpacity: 0,
   petals: false,
   petalDensity: 'gentle',
   petalSpeed: 'drifting',
