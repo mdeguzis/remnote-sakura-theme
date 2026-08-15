@@ -10,8 +10,13 @@
  *
  * There are exactly four pseudo-elements available on html and body, and this
  * theme needs all four: two for the branches and two for the petal drift. That
- * is why all three branch positions share one element through a multi-value
- * mask rather than taking one element each.
+ * is why every piece of scenery shares one element through a multi-value mask
+ * rather than taking one element each.
+ *
+ * The corner shop rides along on the same two layers: its silhouette is a
+ * fourth mask on the wood element and its lit doorway and lantern are a fourth
+ * mask on the blossom element. It costs no extra pseudo-element, and it gets
+ * the warm colour for free because that layer is already painted in blossom.
  *
  * Every layer is `position: fixed`, `pointer-events: none` and behind the
  * content, so nothing here can ever intercept a click or scroll with the page.
@@ -37,25 +42,28 @@ html::after {
 /* Layer one: the wood. */
 html::before {
   background-color: rgb(var(--sakura-wood));
-  mask-image: var(--sakura-branch-top-left-wood), var(--sakura-branch-top-right-wood), var(--sakura-branch-bottom-left-wood);
-  -webkit-mask-image: var(--sakura-branch-top-left-wood), var(--sakura-branch-top-right-wood), var(--sakura-branch-bottom-left-wood);
-  mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh;
-  -webkit-mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh;
-  mask-size: 46vw auto, 40vw auto, 34vw auto;
-  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto;
+  mask-image: var(--sakura-branch-top-left-wood), var(--sakura-branch-top-right-wood),
+    var(--sakura-branch-bottom-left-wood), var(--sakura-scenery-shop-structure);
+  -webkit-mask-image: var(--sakura-branch-top-left-wood), var(--sakura-branch-top-right-wood),
+    var(--sakura-branch-bottom-left-wood), var(--sakura-scenery-shop-structure);
+  mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
+  -webkit-mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
+  mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
+  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
 }
 
 /* Layer two: the blossoms, in their own color and slightly stronger, since the
  * flowers are what the theme is actually about. */
 html::after {
   background-color: rgb(var(--sakura-blossom));
-  mask-image: var(--sakura-branch-top-left-blossoms), var(--sakura-branch-top-right-blossoms), var(--sakura-branch-bottom-left-blossoms);
+  mask-image: var(--sakura-branch-top-left-blossoms), var(--sakura-branch-top-right-blossoms),
+    var(--sakura-branch-bottom-left-blossoms), var(--sakura-scenery-shop-lights);
   -webkit-mask-image: var(--sakura-branch-top-left-blossoms), var(--sakura-branch-top-right-blossoms),
-    var(--sakura-branch-bottom-left-blossoms);
-  mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh;
-  -webkit-mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh;
-  mask-size: 46vw auto, 40vw auto, 34vw auto;
-  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto;
+    var(--sakura-branch-bottom-left-blossoms), var(--sakura-scenery-shop-lights);
+  mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
+  -webkit-mask-position: left -2vw top -1vh, right -3vw top -2vh, left -4vw bottom -3vh, right -1vw bottom 0;
+  mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
+  -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 30vw auto;
   opacity: calc(var(--sakura-tree-opacity) * 1.25);
 }
 
@@ -66,8 +74,8 @@ html::after {
 @media (max-width: 900px) {
   html::before,
   html::after {
-    mask-size: 62vw auto, 56vw auto, 0 0;
-    -webkit-mask-size: 62vw auto, 56vw auto, 0 0;
+    mask-size: 62vw auto, 56vw auto, 0 0, 46vw auto;
+    -webkit-mask-size: 62vw auto, 56vw auto, 0 0, 46vw auto;
   }
 }
 

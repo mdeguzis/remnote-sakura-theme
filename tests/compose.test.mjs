@@ -160,6 +160,55 @@ test('normalizeOptions handles null and undefined', () => {
 });
 
 test('normalizeOptions keeps valid values untouched', () => {
-  const input = { shade: 'yozakura', trees: 'bold', petals: true, petalDensity: 'heavy', petalSpeed: 'brisk' };
+  const input = {
+    shade: 'yozakura',
+    trees: 'bold',
+    scenery: false,
+    petals: true,
+    petalDensity: 'heavy',
+    petalSpeed: 'brisk',
+  };
   assert.deepEqual(normalizeOptions(input), input);
+});
+
+// --- scenery -------------------------------------------------------------
+
+test('branches default to bold and the corner shop is on', () => {
+  assert.equal(DEFAULT_OPTIONS.trees, 'bold');
+  assert.equal(DEFAULT_OPTIONS.scenery, true);
+});
+
+test('the shop is drawn by default', () => {
+  const css = compose(DEFAULT_OPTIONS);
+  assert.match(css, /--sakura-scenery-shop-structure: url\(/);
+  assert.match(css, /--sakura-scenery-shop-lights: url\(/);
+});
+
+test('turning the shop off resolves its layers to none', () => {
+  // The shop shares its mask layers with the branches, so it cannot be removed
+  // by dropping a rule. It has to resolve to none instead.
+  const css = compose({ ...DEFAULT_OPTIONS, scenery: false });
+  assert.match(css, /--sakura-scenery-shop-structure: none/);
+  assert.match(css, /--sakura-scenery-shop-lights: none/);
+  assert.match(css, /--sakura-branch-top-left-wood: url\(/, 'branches should be unaffected');
+});
+
+test('turning branches off resolves branch layers to none', () => {
+  const css = compose({ ...DEFAULT_OPTIONS, trees: 'off' });
+  assert.match(css, /--sakura-branch-top-left-wood: none/);
+  assert.match(css, /--sakura-branch-bottom-left-blossoms: none/);
+});
+
+test('the shop still shows when branches are off', () => {
+  // Both are painted by the same element, and that element has one opacity.
+  // Using the branch opacity of zero here would hide the shop too.
+  const css = compose({ ...DEFAULT_OPTIONS, trees: 'off', scenery: true });
+  assert.match(css, /--sakura-scenery-shop-structure: url\(/);
+  const opacity = Number.parseFloat(/--sakura-tree-opacity: ([\d.]+)/.exec(css)[1]);
+  assert.ok(opacity > 0, 'layer opacity must stay above zero so the shop is visible');
+});
+
+test('the layer is dropped entirely when nothing is drawn on it', () => {
+  const css = compose({ ...DEFAULT_OPTIONS, trees: 'off', scenery: false });
+  assert.doesNotMatch(css, /html::before/, 'the branch layer should not be mounted at all');
 });

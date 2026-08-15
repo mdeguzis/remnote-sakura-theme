@@ -21,6 +21,7 @@ const CSS_KEY = 'sakura-theme';
 const SETTINGS = {
   shade: 'shade',
   trees: 'trees',
+  scenery: 'scenery',
   petals: 'petals',
   petalDensity: 'petal-density',
   petalSpeed: 'petal-speed',
@@ -67,6 +68,13 @@ async function onActivate(plugin: ReactRNPlugin) {
   });
 
   await plugin.settings.registerBooleanSetting({
+    id: SETTINGS.scenery,
+    title: 'Corner shop',
+    description: 'A small shop with a cat sitting outside, in the bottom right corner.',
+    defaultValue: DEFAULT_OPTIONS.scenery,
+  });
+
+  await plugin.settings.registerBooleanSetting({
     id: SETTINGS.petals,
     title: 'Falling petals',
     description:
@@ -100,6 +108,7 @@ async function onActivate(plugin: ReactRNPlugin) {
     const options = normalizeOptions({
       shade: await reactivePlugin.settings.getSetting<string>(SETTINGS.shade),
       trees: await reactivePlugin.settings.getSetting<TreeMode>(SETTINGS.trees),
+      scenery: await reactivePlugin.settings.getSetting<boolean>(SETTINGS.scenery),
       petals: await reactivePlugin.settings.getSetting<boolean>(SETTINGS.petals),
       petalDensity: await reactivePlugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
       petalSpeed: await reactivePlugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
@@ -111,6 +120,7 @@ async function onActivate(plugin: ReactRNPlugin) {
     console.debug(`${LOG_PREFIX} applied stylesheet`, {
       shade: options.shade,
       trees: options.trees,
+      scenery: options.scenery,
       petals: options.petals,
       petalDensity: options.petalDensity,
       petalSpeed: options.petalSpeed,

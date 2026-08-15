@@ -22,6 +22,7 @@ import {
   type SakuraOptions,
 } from './options.ts';
 
+
 /** Emit one palette's variables as declarations. */
 function paletteVars(palette: Palette): string {
   return [
@@ -45,10 +46,20 @@ function paletteVars(palette: Palette): string {
  *
  * Declared once on :root so the mask rules can reference them by name and the
  * same URI is not repeated across the light and dark blocks.
+ *
+ * The branches and the corner shop share the same two mask layers, so neither
+ * can be removed by dropping a rule the way the petal animation is. Instead a
+ * switched off piece resolves to `none`, which is a valid value for one layer
+ * of a multi-value mask and costs nothing to composite.
  */
-function assetVars(): string {
+function assetVars(options: SakuraOptions): string {
   return Object.entries(ASSETS)
-    .map(([name, uri]) => `  --sakura-${name}: url("${uri}");`)
+    .map(([name, uri]) => {
+      const isBranch = name.startsWith('branch-');
+      const isScenery = name.startsWith('scenery-');
+      const hidden = (isBranch && options.trees === 'off') || (isScenery && !options.scenery);
+      return `  --sakura-${name}: ${hidden ? 'none' : `url("${uri}")`};`;
+    })
     .join('\n');
 }
 
@@ -65,14 +76,23 @@ export function compose(rawOptions: Partial<SakuraOptions>): string {
   const tile = PETAL_TILE[options.petalDensity];
   const duration = PETAL_DURATION[options.petalSpeed];
 
+  // Branches and scenery are painted by the same two elements, and that element
+  // carries one opacity. With branches off but scenery on, using the branch
+  // opacity of zero would hide the shop too, so fall back to a visible value.
+  const layerOpacity =
+    options.trees === 'off' && options.scenery ? TREE_OPACITY.normal : TREE_OPACITY[options.trees];
+
+  // The layer is only worth mounting if something is drawn on it.
+  const showLayers = options.trees !== 'off' || options.scenery;
+
   const parts: string[] = [];
 
   parts.push(`/* Sakura for RemNote - shade: ${shade.name} */`);
 
   // Light is the base. RemNote adds a `dark` class to the root element, so the
   // dark block overrides it with a higher specificity selector.
-  parts.push(`:root {\n${assetVars()}\n\n${paletteVars(shade.light)}\n
-  --sakura-tree-opacity: ${TREE_OPACITY[options.trees]};
+  parts.push(`:root {\n${assetVars(options)}\n\n${paletteVars(shade.light)}\n
+  --sakura-tree-opacity: ${layerOpacity};
   --sakura-petal-opacity: ${tile.opacity};
   --sakura-petal-size-near: ${tile.near};
   --sakura-petal-size-far: ${tile.far};
@@ -100,7 +120,7 @@ export function compose(rawOptions: Partial<SakuraOptions>): string {
   // Omit the layers entirely when they are switched off, rather than shipping
   // them at zero opacity. A fixed, full viewport masked element still costs
   // compositing work even when it is invisible.
-  if (options.trees !== 'off') {
+  if (showLayers) {
     parts.push(CSS.trees);
   }
   if (options.petals) {

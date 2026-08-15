@@ -32,6 +32,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { makeShopSvgs } from './lib/shop.mjs';
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'assets');
 
@@ -256,6 +258,10 @@ const ASSETS = {
   'petals-near.svg': makePetalTile(4242, 260, 7, 0.075),
   'petals-far.svg': makePetalTile(909, 320, 9, 0.045),
 };
+
+const shop = makeShopSvgs();
+ASSETS['scenery-shop-structure.svg'] = shop.structure;
+ASSETS['scenery-shop-lights.svg'] = shop.lights;
 
 for (const [position, spec] of Object.entries(BRANCHES)) {
   const layers = makeBranchSvg(spec);

@@ -7,6 +7,8 @@ export type PetalSpeed = 'slow' | 'drifting' | 'brisk';
 export interface SakuraOptions {
   shade: string;
   trees: TreeMode;
+  /** The corner shop with the cat. Rides on the branch layers. */
+  scenery: boolean;
   petals: boolean;
   petalDensity: PetalDensity;
   petalSpeed: PetalSpeed;
@@ -20,7 +22,8 @@ export interface SakuraOptions {
  */
 export const DEFAULT_OPTIONS: SakuraOptions = {
   shade: 'hanami',
-  trees: 'normal',
+  trees: 'bold',
+  scenery: true,
   petals: false,
   petalDensity: 'gentle',
   petalSpeed: 'drifting',
@@ -72,6 +75,7 @@ export function normalizeOptions(raw: Partial<SakuraOptions> | null | undefined)
   return {
     shade: typeof input.shade === 'string' ? input.shade : DEFAULT_OPTIONS.shade,
     trees: pick(input.trees, TREE_MODES, DEFAULT_OPTIONS.trees),
+    scenery: typeof input.scenery === 'boolean' ? input.scenery : DEFAULT_OPTIONS.scenery,
     petals: typeof input.petals === 'boolean' ? input.petals : DEFAULT_OPTIONS.petals,
     petalDensity: pick(input.petalDensity, PETAL_DENSITIES, DEFAULT_OPTIONS.petalDensity),
     petalSpeed: pick(input.petalSpeed, PETAL_SPEEDS, DEFAULT_OPTIONS.petalSpeed),

@@ -36,8 +36,10 @@ function buildVariants() {
             if (!petals && (petalDensity !== DEFAULT_OPTIONS.petalDensity || petalSpeed !== DEFAULT_OPTIONS.petalSpeed)) {
               continue;
             }
-            const key = [shade.id, trees, petals ? 'on' : 'off', petalDensity, petalSpeed].join('|');
-            variants[key] = compose({ shade: shade.id, trees, petals, petalDensity, petalSpeed });
+            for (const scenery of [true, false]) {
+              const key = [shade.id, trees, scenery ? 'shop' : 'noshop', petals ? 'on' : 'off', petalDensity, petalSpeed].join('|');
+              variants[key] = compose({ shade: shade.id, trees, scenery, petals, petalDensity, petalSpeed });
+            }
           }
         }
       }
@@ -135,33 +137,45 @@ const PAGE_CSS = `
 `;
 
 /**
- * Pull the asset declarations out of every variant and keep one copy.
+ * Pull the asset declarations out of every variant.
  *
- * Each composed stylesheet embeds ~38 KB of SVG data URIs, and they are byte
- * identical across variants. Left in place the page came to 7 MB. They are
- * plain custom properties on :root, so hoisting them into their own block
- * behaves exactly the same.
+ * Each composed stylesheet embeds ~40 KB of SVG data URIs. Left in place the
+ * page came to 7 MB. They are plain custom properties on :root, so lifting them
+ * into their own block behaves exactly the same.
+ *
+ * They are not identical across variants: switching the branches or the shop
+ * off resolves those layers to `none` rather than a URI, because both are
+ * painted by the same mask element and cannot be removed by dropping a rule.
+ * So this groups the variants by their asset block and emits each distinct one
+ * once. In practice that is a handful of blocks rather than one, which is still
+ * far better than one per variant.
  */
 function hoistAssets(variants) {
-  const assetLine = /^\s*--sakura-(?:branch|petals)[^\n]*\n/gm;
-  let shared = null;
+  const assetLine = /^\s*--sakura-(?:branch|petals|scenery)[^\n]*\n/gm;
+  const blocks = new Map();
+  const byVariant = {};
 
   for (const [key, css] of Object.entries(variants)) {
     const found = css.match(assetLine);
     if (!found) continue;
+
     const block = found.join('');
-    if (shared === null) shared = block;
-    else if (shared !== block) throw new Error(`asset block differs between variants at ${key}`);
+    if (!blocks.has(block)) blocks.set(block, `a${blocks.size}`);
+
+    byVariant[key] = blocks.get(block);
     variants[key] = css.replace(assetLine, '');
   }
 
-  if (shared === null) throw new Error('no asset declarations found to hoist');
-  return `:root {\n${shared}}`;
+  if (blocks.size === 0) throw new Error('no asset declarations found to hoist');
+
+  const assets = {};
+  for (const [block, id] of blocks) assets[id] = `:root {\n${block}}`;
+  return { assets, byVariant };
 }
 
 function main() {
   const variants = buildVariants();
-  const sharedAssets = hoistAssets(variants);
+  const { assets, byVariant } = hoistAssets(variants);
 
   const html = `<!doctype html>
 <html lang="en">
@@ -170,7 +184,7 @@ function main() {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sakura preview</title>
 <style>${PAGE_CSS}</style>
-<style>${sharedAssets}</style>
+<style id="assets"></style>
 <style id="theme"></style>
 </head>
 <body>
@@ -182,6 +196,9 @@ function main() {
   </label>
   <label>Branches
     <select id="trees">${TREE_MODES.map((t) => `<option value="${t}"${t === DEFAULT_OPTIONS.trees ? ' selected' : ''}>${t}</option>`).join('')}</select>
+  </label>
+  <label>Shop
+    <select id="scenery"><option value="shop">on</option><option value="noshop">off</option></select>
   </label>
   <label>Petals
     <select id="petals"><option value="off">off</option><option value="on">on</option></select>
@@ -200,6 +217,8 @@ function main() {
 
 <script>
 const VARIANTS = ${JSON.stringify(variants)};
+const ASSET_BLOCKS = ${JSON.stringify(assets)};
+const ASSET_BY_VARIANT = ${JSON.stringify(byVariant)};
 const DEFAULTS = ${JSON.stringify({ density: DEFAULT_OPTIONS.petalDensity, speed: DEFAULT_OPTIONS.petalSpeed })};
 const el = (id) => document.getElementById(id);
 
@@ -208,13 +227,14 @@ function apply() {
   // Density and speed only exist as variants when petals are on.
   const density = petals === 'on' ? el('density').value : DEFAULTS.density;
   const speed = petals === 'on' ? el('speed').value : DEFAULTS.speed;
-  const key = [el('shade').value, el('trees').value, petals, density, speed].join('|');
+  const key = [el('shade').value, el('trees').value, el('scenery').value, petals, density, speed].join('|');
   const css = VARIANTS[key];
   if (!css) { console.error('no variant for', key); return; }
+  el('assets').textContent = ASSET_BLOCKS[ASSET_BY_VARIANT[key]] || '';
   el('theme').textContent = css;
 }
 
-for (const id of ['shade','trees','petals','density','speed']) {
+for (const id of ['shade','trees','scenery','petals','density','speed']) {
   el(id).addEventListener('change', apply);
 }
 el('mode').addEventListener('click', () => {
@@ -236,7 +256,7 @@ apply();
 
   console.log(
     `[preview] ${path.relative(ROOT, OUT)} variants=${Object.keys(variants).length} ` +
-      `${(Buffer.byteLength(html, 'utf8') / 1024).toFixed(0)} KB`
+      `assetBlocks=${Object.keys(assets).length} ${(Buffer.byteLength(html, 'utf8') / 1024).toFixed(0)} KB`
   );
   console.log(`[preview] open file://${OUT}`);
 }

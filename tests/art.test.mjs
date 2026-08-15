@@ -21,6 +21,8 @@ test('the expected artwork exists', () => {
     'branch-top-right-wood.svg',
     'petals-far.svg',
     'petals-near.svg',
+    'scenery-shop-lights.svg',
+    'scenery-shop-structure.svg',
   ];
   assert.deepEqual(files.slice().sort(), expected);
 });
