@@ -45,26 +45,31 @@ const GROUND = 356;
  * in CSS. Because these are alpha masks, the fix belongs in the artwork.
  */
 /*
- * These are balanced against each other, not chosen independently.
+ * These are balanced against each other, not chosen independently, and numeric
+ * parity is not the target.
  *
  * The blossom layer is painted at 1.25x the branch layer opacity, so a light
- * drawn at alpha a ends up 1.25a on screen while structure ends up 1.0a. With
- * structure at 0.58 and detail at 0.92 the details landed twice as strong as
- * the building they sit on. That is invisible at full strength, but anything
- * translucent laid over the top fades the weak layer out first, so under a code
- * block the building vanished and left the lattice panes and the sign face
- * floating on their own.
+ * drawn at alpha a lands at 1.25a while structure lands at 1.0a. The previous
+ * values left detail slightly ABOVE structure on screen (0.390 vs 0.364).
  *
- * Keeping effective weights close means the whole shop fades together and goes
- * on reading as one object at any opacity above it.
+ * Worse, equal alpha does not mean equal prominence. Structure is a desaturated
+ * brown covering a large area; lights are small, saturated pink marks. On a pale
+ * pink page the brown mass sits close to the background in both luminance and
+ * chroma and recedes, while the pink marks stay distinct. Put a translucent
+ * panel over the top and the mass disappears first, leaving the lattice panes
+ * and the sign floating with no building around them. That effect gets stronger
+ * the more transparent the panel is, which is exactly what it looks like.
  *
- *   structure  0.70 x 1.00 = 0.70
- *   lights     0.42 x 1.25 = 0.53
- *   detail     0.60 x 1.25 = 0.75
+ * So structure is now numerically dominant, to buy back the prominence it loses
+ * perceptually:
+ *
+ *   structure  0.85 x 1.00 = 0.85
+ *   lights     0.28 x 1.25 = 0.35
+ *   detail     0.40 x 1.25 = 0.50
  */
-const STRUCTURE_ALPHA = 0.7;
-const LIGHT_ALPHA = 0.42;
-const DETAIL_ALPHA = 0.6;
+const STRUCTURE_ALPHA = 0.85;
+const LIGHT_ALPHA = 0.28;
+const DETAIL_ALPHA = 0.4;
 
 const SHOP = { left: 70, right: 520 };
 const ROOF = { left: 24, right: 566, top: 24, eave: 112 };

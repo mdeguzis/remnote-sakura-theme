@@ -173,6 +173,26 @@ test('text colors are fully opaque', () => {
   }
 });
 
+test('the scenery structure outweighs its lit detail on screen', async () => {
+  // The blossom layer is painted at 1.25x the branch layer, so equal authored
+  // alphas do not land equal. And equal alpha is not equal prominence anyway:
+  // the structure is a desaturated mass and the lights are small saturated
+  // marks, so under a translucent panel the mass fades first and the marks are
+  // left floating with no building around them.
+  const shop = await import('node:fs').then((fs) =>
+    fs.readFileSync(new URL('../scripts/lib/shop.mjs', import.meta.url), 'utf8')
+  );
+  const read = (name) => Number.parseFloat(new RegExp(`const ${name} = ([\\d.]+)`).exec(shop)[1]);
+
+  const BLOSSOM_LAYER_MULTIPLIER = 1.25;
+  const structure = read('STRUCTURE_ALPHA');
+  const lights = read('LIGHT_ALPHA') * BLOSSOM_LAYER_MULTIPLIER;
+  const detail = read('DETAIL_ALPHA') * BLOSSOM_LAYER_MULTIPLIER;
+
+  assert.ok(structure > detail, `structure ${structure} must outweigh detail ${detail}`);
+  assert.ok(structure > lights, `structure ${structure} must outweigh lights ${lights}`);
+});
+
 test('assets are inlined as svg data uris', () => {
   assert.ok(Object.keys(ASSETS).length >= 8);
   for (const [name, uri] of Object.entries(ASSETS)) {
