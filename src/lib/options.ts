@@ -24,6 +24,14 @@ export interface SakuraOptions {
   petals: boolean;
   petalDensity: PetalDensity;
   petalSpeed: PetalSpeed;
+  /**
+   * How strongly the shade colours the page, as a percentage.
+   *
+   * 100 is the palette as authored. Lower washes it toward neutral, higher
+   * deepens it. A blush palette reads as too pale to some people and that is a
+   * matter of taste rather than a bug, so it is a knob instead of a redesign.
+   */
+  tintStrength: number;
 }
 
 /**
@@ -40,6 +48,7 @@ export const DEFAULT_OPTIONS: SakuraOptions = {
   petals: false,
   petalDensity: 'gentle',
   petalSpeed: 'drifting',
+  tintStrength: 100,
 };
 
 /** Opacity of the branch layer for each tree setting. */
@@ -79,6 +88,23 @@ export const PETAL_DENSITIES: PetalDensity[] = ['sparse', 'gentle', 'heavy'];
 export const PETAL_SPEEDS: PetalSpeed[] = ['slow', 'drifting', 'brisk'];
 
 /**
+ * The tint range.
+ *
+ * Capped at 200 rather than left open. Deepening a light ground costs contrast
+ * against text that does not move with it, and the ceiling is set where the
+ * contrast tests still hold across every shade.
+ */
+export const TINT_MIN = 0;
+export const TINT_MAX = 200;
+
+/** Clamp a number from a free text setting to an arbitrary range. */
+export function clampNumber(value: unknown, fallback: number, min: number, max: number): number {
+  const n = typeof value === 'number' ? value : Number.parseFloat(String(value));
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(n)));
+}
+
+/**
  * Coerce stored settings into something usable.
  *
  * Settings survive plugin upgrades, so a stored value may name an option that
@@ -111,5 +137,6 @@ export function normalizeOptions(raw: Partial<SakuraOptions> | null | undefined)
     petals: typeof input.petals === 'boolean' ? input.petals : DEFAULT_OPTIONS.petals,
     petalDensity: pick(input.petalDensity, PETAL_DENSITIES, DEFAULT_OPTIONS.petalDensity),
     petalSpeed: pick(input.petalSpeed, PETAL_SPEEDS, DEFAULT_OPTIONS.petalSpeed),
+    tintStrength: clampNumber(input.tintStrength, DEFAULT_OPTIONS.tintStrength, TINT_MIN, TINT_MAX),
   };
 }

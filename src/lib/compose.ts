@@ -13,7 +13,7 @@
 
 import { ASSETS } from './assets.generated.ts';
 import { CSS } from './css.generated.ts';
-import { findShade, DEFAULT_SHADE, type Palette } from './palettes.ts';
+import { findShade, DEFAULT_SHADE, withTintStrength, type Palette } from './palettes.ts';
 import {
   PETAL_DURATION,
   PETAL_TILE,
@@ -73,6 +73,12 @@ export function compose(rawOptions: Partial<SakuraOptions>): string {
     throw new Error(`no shade found for "${options.shade}" and no default available`);
   }
 
+  // Apply the tint strength ONCE, here, so every later reference to the palette
+  // sees the adjusted colours. Applying it at each use site would be two
+  // chances to forget one and ship a page whose light and dark blocks disagree.
+  const light = withTintStrength(shade.light, options.tintStrength);
+  const dark = withTintStrength(shade.dark, options.tintStrength);
+
   const tile = PETAL_TILE[options.petalDensity];
   const duration = PETAL_DURATION[options.petalSpeed];
 
@@ -91,7 +97,7 @@ export function compose(rawOptions: Partial<SakuraOptions>): string {
 
   // Light is the base. RemNote adds a `dark` class to the root element, so the
   // dark block overrides it with a higher specificity selector.
-  parts.push(`:root {\n${assetVars(options)}\n\n${paletteVars(shade.light)}\n
+  parts.push(`:root {\n${assetVars(options)}\n\n${paletteVars(light)}\n
   --sakura-tree-opacity: ${layerOpacity};
   --sakura-petal-opacity: ${tile.opacity};
   --sakura-petal-size-near: ${tile.near};
@@ -115,7 +121,7 @@ export function compose(rawOptions: Partial<SakuraOptions>): string {
   // a nested element cannot reach `html::before`, which is where the branches
   // are drawn. Declaring them on html means the pseudo-elements get them and
   // everything below inherits them.
-  parts.push(`html.dark,\nhtml:has(.dark) {\n${paletteVars(shade.dark)}\n}`);
+  parts.push(`html.dark,\nhtml:has(.dark) {\n${paletteVars(dark)}\n}`);
 
   parts.push(CSS.base);
 

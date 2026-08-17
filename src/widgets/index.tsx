@@ -85,6 +85,14 @@ async function registerEverything(plugin: ReactRNPlugin) {
     defaultValue: DEFAULT_OPTIONS.codeOpacity,
   });
 
+  await plugin.settings.registerNumberSetting({
+    id: SETTINGS.tintStrength,
+    title: 'Tint strength',
+    description:
+      'How strongly the shade colours the page, from 0 to 200. 100 is the shade as designed. Lower washes it toward neutral, higher deepens it if the blush feels too pale. Text colour does not move, so very high values trade away some contrast.',
+    defaultValue: DEFAULT_OPTIONS.tintStrength,
+  });
+
   await plugin.settings.registerBooleanSetting({
     id: SETTINGS.petals,
     title: 'Falling petals',

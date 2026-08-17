@@ -31,9 +31,12 @@ Settings, Plugins, Sakura.
 | Blossom branches | Off, Subtle, Normal, Bold | Bold |
 | Corner shop | On, Off | On |
 | Panel opacity | 0 to 100 | 75 |
+| Tint strength | 0 to 200 | 100 |
 | Falling petals | On, Off | **Off** |
 | Petal density | Sparse, Gentle, Heavy | Gentle |
 | Petal speed | Slow, Drifting, Brisk | Drifting |
+
+Tint strength is there for anyone who finds the palettes too pale. 100 is each shade as designed; higher deepens the ground, lower washes it toward neutral. Text colour does not move with it, so the range is capped at 200, which is where the contrast floor still holds on every shade.
 
 Panel opacity controls how solid the inset surfaces are: code blocks, the editor container, and anything else RemNote insets. It drives `--current-background-color`, which is the variable RemNote actually paints those with.
 

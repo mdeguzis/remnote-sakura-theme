@@ -169,6 +169,7 @@ test('normalizeOptions keeps valid values untouched', () => {
     petals: true,
     petalDensity: 'heavy',
     petalSpeed: 'brisk',
+    tintStrength: 140,
   };
   assert.deepEqual(normalizeOptions(input), input);
 });
@@ -269,4 +270,25 @@ test('the shop still shows when branches are off', () => {
 test('the layer is dropped entirely when nothing is drawn on it', () => {
   const css = compose({ ...DEFAULT_OPTIONS, trees: 'off', scenery: false });
   assert.doesNotMatch(css, /html::before/, 'the branch layer should not be mounted at all');
+});
+
+// --- tint strength -------------------------------------------------------
+
+test('tint strength reaches the emitted palette variables', () => {
+  const plain = compose({ ...DEFAULT_OPTIONS, tintStrength: 100 });
+  const deep = compose({ ...DEFAULT_OPTIONS, tintStrength: 200 });
+
+  const read = (css) => /--sakura-bg-top: ([^;]+);/.exec(css)[1];
+  assert.notEqual(read(deep), read(plain), 'the ground should move with the setting');
+});
+
+test('an out of range tint strength never emits a broken colour', () => {
+  // A number setting accepts whatever is typed, and a malformed triplet voids
+  // every rgba() that reads it.
+  for (const tintStrength of [-50, 0, 999, Number.NaN, 'lots']) {
+    const css = compose({ ...DEFAULT_OPTIONS, tintStrength });
+    for (const [, value] of css.matchAll(/--sakura-(?:bg-top|bg-bottom|surface|elevated): ([^;]+);/g)) {
+      assert.match(value, /^\d{1,3}, \d{1,3}, \d{1,3}$/, `tint ${tintStrength} emitted "${value}"`);
+    }
+  }
 });

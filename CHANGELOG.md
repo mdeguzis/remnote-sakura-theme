@@ -3,6 +3,24 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-08-16
+
+### Added
+
+- A **Tint strength** setting, 0 to 200, for anyone who finds the palettes too
+  pale. 100 is each shade exactly as designed; higher deepens the ground, lower
+  washes it toward neutral.
+
+  Only the grounds and surfaces move. Text, accent, border and the artwork
+  colours stay where they were, because text has to hold still for the contrast
+  floor to mean anything, and shifting wood or blossom would change what the
+  tree is made of rather than what it stands on. Panels take the colour shift
+  but only a third of the lightness shift, since they carry the most text.
+
+  The range stops at 200 because that is where the 4.5:1 floor still holds on
+  every shade. The contrast tests now walk the whole range in steps of ten
+  rather than checking the authored values alone.
+
 ## [1.1.2] - 2026-08-15
 
 ### Fixed

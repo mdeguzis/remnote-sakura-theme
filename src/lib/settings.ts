@@ -20,6 +20,7 @@ export const SETTINGS = {
   petals: 'petals',
   petalDensity: 'petal-density',
   petalSpeed: 'petal-speed',
+  tintStrength: 'tint-strength',
 } as const;
 
 /**
@@ -38,6 +39,7 @@ export async function readOptions(plugin: RNPlugin): Promise<SakuraOptions> {
     petals: await plugin.settings.getSetting<boolean>(SETTINGS.petals),
     petalDensity: await plugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
     petalSpeed: await plugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
+    tintStrength: await plugin.settings.getSetting<number>(SETTINGS.tintStrength),
   });
 }
 

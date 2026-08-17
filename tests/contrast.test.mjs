@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { SHADES } from '../src/lib/palettes.ts';
+import { SHADES, withTintStrength } from '../src/lib/palettes.ts';
+import { TINT_MAX, TINT_MIN } from '../src/lib/options.ts';
 
 /**
  * Contrast checks for every shade, in both modes.
@@ -103,3 +104,86 @@ for (const shade of SHADES) {
     );
   });
 }
+
+/*
+ * Tint strength.
+ *
+ * The setting deepens the grounds while the text colour stays exactly where it
+ * was, so every step up spends contrast. These palettes start with less to
+ * spare than most, because the dark ones hold their plum and indigo instead of
+ * dropping to charcoal. The range is only safe if the floor still holds at the
+ * far end of it, and nobody is going to check that by eye for eight palettes.
+ * These walk the whole range instead.
+ */
+for (const shade of SHADES) {
+  for (const mode of ['light', 'dark']) {
+    const label = `${shade.id}/${mode}`;
+
+    test(`${label}: body text stays readable across the whole tint range`, () => {
+      for (let strength = TINT_MIN; strength <= TINT_MAX; strength += 10) {
+        const palette = withTintStrength(shade[mode], strength);
+        const surface = blend(palette.bgTop, palette.bgBottom, 0.62);
+        const ratio = contrast(palette.text, surface);
+        assert.ok(ratio >= 4.5, `${label} at tint ${strength}: ${ratio.toFixed(2)}:1 on the page`);
+      }
+    });
+
+    test(`${label}: panel text stays readable across the whole tint range`, () => {
+      // Elevated holds menus, dialogs and code blocks, and takes only a third
+      // of the lightness shift for exactly this reason.
+      for (let strength = TINT_MIN; strength <= TINT_MAX; strength += 10) {
+        const palette = withTintStrength(shade[mode], strength);
+        const panel = blend(palette.elevated, palette.bgTop, 0.94);
+        const ratio = contrast(palette.text, panel);
+        assert.ok(ratio >= 4.5, `${label} at tint ${strength}: ${ratio.toFixed(2)}:1 on a panel`);
+      }
+    });
+  }
+}
+
+test('tint strength at 100 changes nothing at all', () => {
+  // The default has to be the palette exactly as authored, or every colour
+  // decision made by eye is silently re-tuned by a round trip.
+  for (const shade of SHADES) {
+    for (const mode of ['light', 'dark']) {
+      assert.deepEqual(withTintStrength(shade[mode], 100), shade[mode], `${shade.id}/${mode}`);
+    }
+  }
+});
+
+test('tint strength moves the ground in the direction it claims', () => {
+  const base = SHADES[0].light;
+  assert.ok(
+    luminance(withTintStrength(base, 200).bgTop) < luminance(base.bgTop),
+    'higher strength should deepen the ground'
+  );
+  assert.ok(
+    luminance(withTintStrength(base, 40).bgTop) > luminance(base.bgTop),
+    'lower strength should lighten it'
+  );
+});
+
+test('tint strength leaves text, accent and artwork alone', () => {
+  // Only the grounds move. Shifting text would make the contrast floor
+  // meaningless, and shifting wood or blossom would change what the tree is
+  // made of rather than what it stands on.
+  for (const strength of [0, 50, 200]) {
+    const out = withTintStrength(SHADES[0].light, strength);
+    for (const key of ['text', 'textMuted', 'accent', 'border', 'wood', 'blossom', 'petal']) {
+      assert.equal(out[key], SHADES[0].light[key], `${key} moved at strength ${strength}`);
+    }
+  }
+});
+
+test('every palette colour is a parseable triplet after tinting', () => {
+  // This palette stores channels, not hex. A tint that emitted hex would void
+  // every rgba() it landed in, silently.
+  for (const shade of SHADES) {
+    for (const mode of ['light', 'dark']) {
+      const out = withTintStrength(shade[mode], 175);
+      for (const [key, value] of Object.entries(out)) {
+        assert.match(value, /^\d{1,3}, \d{1,3}, \d{1,3}$/, `${shade.id}/${mode}.${key} = ${value}`);
+      }
+    }
+  }
+});

@@ -187,3 +187,110 @@ export const DEFAULT_SHADE = 'hanami';
 export function findShade(id: string): Shade | undefined {
   return SHADES.find((shade) => shade.id === id);
 }
+
+/* ------------------------------------------------------------ tint strength */
+
+/**
+ * "248, 228, 236" -> [248, 228, 236].
+ *
+ * This palette stores channels, not hex, because nearly every surface is drawn
+ * at partial alpha. The tint maths needs real numbers, so it parses on the way
+ * in and formats on the way back out; the stored form never changes.
+ */
+function parseTriplet(triplet: string): [number, number, number] {
+  const parts = triplet.split(',').map((part) => Number.parseFloat(part.trim()));
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) {
+    throw new Error(`palette colour is not an "r, g, b" triplet: ${JSON.stringify(triplet)}`);
+  }
+  return [parts[0], parts[1], parts[2]];
+}
+
+function formatTriplet([r, g, b]: [number, number, number]): string {
+  return [r, g, b].map((c) => Math.max(0, Math.min(255, Math.round(c)))).join(', ');
+}
+
+function rgbToHsl([r, g, b]: [number, number, number]): [number, number, number] {
+  const [rn, gn, bn] = [r / 255, g / 255, b / 255];
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  const d = max - min;
+
+  if (d === 0) return [0, 0, l];
+
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  if (max === rn) h = ((gn - bn) / d + (gn < bn ? 6 : 0)) / 6;
+  else if (max === gn) h = ((bn - rn) / d + 2) / 6;
+  else h = ((rn - gn) / d + 4) / 6;
+
+  return [h, s, l];
+}
+
+function hslToRgb([h, s, l]: [number, number, number]): [number, number, number] {
+  if (s === 0) return [l * 255, l * 255, l * 255];
+
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const channel = (t: number) => {
+    let x = t;
+    if (x < 0) x += 1;
+    if (x > 1) x -= 1;
+    if (x < 1 / 6) return p + (q - p) * 6 * x;
+    if (x < 1 / 2) return q;
+    if (x < 2 / 3) return p + (q - p) * (2 / 3 - x) * 6;
+    return p;
+  };
+
+  return [channel(h + 1 / 3) * 255, channel(h) * 255, channel(h - 1 / 3) * 255];
+}
+
+/**
+ * Deepen or wash out one colour.
+ *
+ * `k` is the strength as a fraction, so 1 is the palette exactly as authored,
+ * 0 removes the tint entirely and 2 is roughly twice as present.
+ *
+ * Saturation scales directly, which is most of the effect. Lightness moves as
+ * well, because "too pale" is the actual complaint a blush theme gets and more
+ * saturation alone does not fix a wash that is simply too light. Both modes
+ * move DOWNWARD in lightness as strength rises: on a light palette that deepens
+ * the ground, on a dark one it sinks it further.
+ *
+ * `weight` scales the lightness movement only. Surfaces that hold a lot of text
+ * get less of it, because lightness is what trades away contrast.
+ */
+function tintColour(triplet: string, k: number, weight = 1): string {
+  if (k === 1) return triplet;
+
+  const [h, s, l] = rgbToHsl(parseTriplet(triplet));
+  const saturation = Math.max(0, Math.min(1, s * k));
+
+  const headroom = l > 0.5 ? (1 - l) * 1.8 : l * 0.35;
+  const lightness = Math.max(0.04, Math.min(0.99, l - (k - 1) * headroom * weight));
+
+  return formatTriplet(hslToRgb([h, saturation, lightness]));
+}
+
+/**
+ * Apply the tint strength setting to a palette.
+ *
+ * Only the grounds and surfaces move. Text, accent, border and the artwork
+ * colours are left exactly as authored: text has to stay put for the contrast
+ * floor to mean anything, and shifting wood, blossom or petal would change what
+ * the tree is made of rather than what it stands on.
+ */
+export function withTintStrength(palette: Palette, strength: number): Palette {
+  const k = strength / 100;
+  if (k === 1) return palette;
+
+  return {
+    ...palette,
+    bgTop: tintColour(palette.bgTop, k),
+    bgBottom: tintColour(palette.bgBottom, k),
+    surface: tintColour(palette.surface, k),
+    // Elevated carries menus, dialogs and code blocks, so it takes the colour
+    // shift but only a third of the lightness shift.
+    elevated: tintColour(palette.elevated, k, 0.34),
+  };
+}
