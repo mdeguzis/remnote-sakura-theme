@@ -56,3 +56,13 @@ test('the changelog has an entry for the current version', () => {
   const changelog = fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8');
   assert.ok(changelog.includes(`[${version}]`), `CHANGELOG.md has no entry for ${version}`);
 });
+
+test('the checked in manifest carries the real id, not a dev one', () => {
+  // The "-dev" suffix exists only to stop a development build colliding with an
+  // installed release, and webpack applies it on the way into the bundle. If it
+  // ever appears in the source manifest it would ship, and the released plugin
+  // would install under the wrong id.
+  const manifest = read('public/manifest.json');
+  assert.doesNotMatch(manifest.id, /-dev$/, `manifest id is "${manifest.id}"`);
+  assert.doesNotMatch(manifest.name, /\(dev\)/, `manifest name is "${manifest.name}"`);
+});

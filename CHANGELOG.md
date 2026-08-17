@@ -3,6 +3,21 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-08-16
+
+### Fixed
+
+- A development build now installs as `sakura-theme-dev` rather than colliding
+  with an installed release. RemNote keys plugins by manifest id and refuses a
+  second one with an id it already has: "A plugin with the ID 'sakura-theme' is
+  already installed." That left anyone running the released plugin unable to
+  load the dev server without uninstalling it first, which is exactly when
+  having both is most useful.
+
+  webpack rewrites the id and name on the way into the bundle, so the checked in
+  manifest keeps the real id and no build step has to remember to undo the
+  suffix. A test fails if a `-dev` id ever reaches the source manifest.
+
 ## [1.2.0] - 2026-08-16
 
 ### Added

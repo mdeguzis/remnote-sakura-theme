@@ -12,6 +12,20 @@ const { execFileSync } = require('child_process');
 const isProd = process.env.NODE_ENV === 'production';
 
 /**
+ * Retag a manifest as a development build.
+ *
+ * Both the id and the visible name change. The id is what actually prevents the
+ * collision; the name is what stops you styling the app from one copy while
+ * reading the settings of the other and wondering why nothing moves.
+ */
+function devManifest(content) {
+  const manifest = JSON.parse(content.toString());
+  manifest.id = `${manifest.id}-dev`;
+  manifest.name = `${manifest.name} (dev)`;
+  return Buffer.from(JSON.stringify(manifest, null, 2) + '\n');
+}
+
+/**
  * Regenerate the artwork and re-inline assets/ and src/css/ before every compile.
  *
  * Those directories are the real source, but the bundle imports them through
@@ -135,7 +149,25 @@ const config = {
     new InlineSourcesPlugin(),
     new CopyPlugin({
       patterns: [
-        { from: 'public', to: '' },
+        {
+          from: 'public',
+          to: '',
+          // A development build gets its own plugin id and name.
+          //
+          // RemNote keys installed plugins by manifest id and refuses a second
+          // one with an id it already has: "A plugin with the ID 'sakura-theme'
+          // is already installed." Anyone who has the released plugin installed
+          // therefore cannot load the dev server at all without uninstalling
+          // it first, which is exactly when you most want both.
+          //
+          // The suffix never reaches a release. It is applied here, on the way
+          // into the bundle, so the checked in manifest keeps the real id and
+          // no build step can forget to undo it.
+          transform: (content, absolutePath) =>
+            isProd || !absolutePath.endsWith('manifest.json')
+              ? content
+              : devManifest(content),
+        },
         { from: 'README.md', to: '' },
         { from: 'logo.png', to: '' },
       ],
