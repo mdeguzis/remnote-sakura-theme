@@ -38,8 +38,19 @@
  *
  * The alphas are the same idea as everywhere else here: page level surfaces let
  * the artwork through, floating ones stay legible, text never goes translucent.
+ *
+ * The doubled `.dark` and `.light` selectors are not a typo. RemNote declares
+ * this same token set on the wrapper element that carries the mode class, not
+ * on the root, and a declaration on an element always beats one inherited from
+ * an ancestor no matter how specific the ancestor's selector is. Overriding on
+ * :root alone therefore reaches nothing inside that wrapper, which is why the
+ * flashcard queue came out in RemNote's greys while the rest of the app was
+ * themed. Repeating the class raises specificity above RemNote's own rule so
+ * the override lands whichever order the two stylesheets end up in.
  */
-:root {
+:root,
+.light.light,
+.dark.dark {
   --rn-clr-background-primary: rgba(var(--sakura-bg-top), 0.62);
   --rn-clr-background-secondary: rgba(var(--sakura-surface), 0.7);
   --rn-clr-background-tertiary: rgba(var(--sakura-surface), 0.78);
@@ -114,6 +125,10 @@ html {
 .rn-clr-background-elevation-40,
 .rn-clr-background-elevation-50 {
   background-color: rgba(var(--sakura-elevated), 0.94);
+  /* In dark mode RemNote paints these as a stack of two gradients, not a flat
+   * colour, and a gradient is a background IMAGE. Setting only the colour left
+   * that opaque grey image on top of it, so the surface never changed. */
+  background-image: none;
   backdrop-filter: blur(10px) saturate(120%);
 }
 
@@ -241,6 +256,7 @@ html {
 .rn-sidebar [aria-selected='true'],
 .rn-sidebar [data-selected='true'] {
   background-color: rgba(var(--sakura-accent), 0.26);
+  background-image: none;
   /* The sidebar already blurs. Blurring the row again muddies the branch. */
   backdrop-filter: none;
 }
@@ -295,6 +311,119 @@ html {
 }
 
 /*
+ * The flashcard queue.
+ *
+ * The queue is its own screen with its own class namespace, and most of it
+ * never touches the design tokens: the card counter pill, the two corner
+ * buttons and the progress groove are painted with RemNote's raw grey
+ * utilities (`bg-gray-10`, `dark:bg-gray-20`). Those cannot be reached by
+ * repointing a token, so each one is repainted here by name.
+ *
+ * The card gets a higher alpha than any other page surface and an explicit
+ * border. Both are for the same reason: it is the only thing on screen, and it
+ * has a branch behind it. At the usual page alpha the artwork read straight
+ * through the answer, and with no border the pale light mode card had no edge
+ * at all against a pale page. The border colour comes from the palette, so it
+ * is a warm line on blush in light mode and a lifted plum in dark rather than
+ * one grey that has to work for both.
+ */
+/*
+ * The page behind the queue.
+ *
+ * These surfaces are cleared rather than tinted, which is the opposite of what
+ * every other page level surface in this file does, and the reason is the
+ * branch layer.
+ *
+ * Alpha compounds. The queue screen stacks several page surfaces on top of each
+ * other, each at 0.62, and by the third one about five percent of what is
+ * underneath survives. That did not show while the branches painted over the
+ * top of the interface, and it is the entire picture now that they are behind
+ * it: tinted, the layers add up to opaque and the artwork disappears.
+ *
+ * Cleared, the queue screen is the page gradient, then the branches, then the
+ * card, which is what the screen wants to be anyway. It is scoped by :has to
+ * the route that mounts a queue, so nothing else in the app loses its surface.
+ *
+ * Two of these are named for what RemNote marks the backdrop up as: an inverse
+ * surface, which is not in the token block on purpose, and a Tailwind dark
+ * variant, which compiles to `.dark .dark\:rn-clr-background-...` at two
+ * classes of specificity and outranks every single class rule in this file.
+ * The descendant selector here carries enough weight to land on both.
+ */
+html:has(.rn-queue-container) .rn-clr-background-primary,
+html:has(.rn-queue-container) .rn-clr-background-secondary,
+html:has(.rn-queue-container) .rn-clr-background-inverse-primary,
+html:has(.rn-queue-container) .dark\:rn-clr-background-primary,
+html:has(.rn-queue-container) .content__page,
+html:has(.rn-queue-container) .rn-content-and-right-sidebar {
+  background-color: transparent;
+  background-image: none;
+}
+
+/*
+ * The dark mode variants of the page surfaces, at the specificity Tailwind
+ * gives them. Without these, any element RemNote marks up as
+ * `dark:rn-clr-background-primary` keeps its default grey in dark mode no
+ * matter what the plain class rule above says.
+ */
+.dark .dark\:rn-clr-background-primary {
+  background-color: rgba(var(--sakura-bg-top), 0.62);
+  background-image: none;
+}
+.dark .dark\:rn-clr-background-secondary {
+  background-color: rgba(var(--sakura-surface), 0.7);
+  background-image: none;
+}
+.dark .dark\:rn-clr-background-tertiary {
+  background-color: rgba(var(--sakura-surface), 0.78);
+  background-image: none;
+}
+
+.rn-queue-container,
+.queue-container {
+  background-color: transparent;
+}
+
+.rn-queue {
+  background-color: rgba(var(--sakura-elevated), 0.97);
+  background-image: none;
+  backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(var(--sakura-border), 0.9);
+  box-shadow: 0 18px 48px rgba(var(--sakura-wood), 0.22);
+}
+
+/* Chrome around and inside the card. Every one of these carries a grey utility
+ * class of its own, which is why they are listed rather than left to inherit. */
+.queue__close-button,
+.queue__sidebar-button,
+.queue__badge,
+.rn-queue__card-counter {
+  background-color: rgba(var(--sakura-surface), 0.9);
+  background-image: none;
+  color: rgb(var(--sakura-text));
+  border: 1px solid rgba(var(--sakura-border), 0.9);
+}
+
+.queue__close-button:hover,
+.queue__sidebar-button:hover {
+  background-color: rgba(var(--sakura-accent), 0.2);
+}
+
+/* Only the groove. The fill on top of it is a gradient RemNote sets inline
+ * from the answer colours, and recolouring that would lose the meaning. */
+.queue__progress-bar {
+  background-color: rgba(var(--sakura-border), 0.55);
+}
+
+/* An unrevealed cloze is a blue chip in RemNote's palette, the one piece of the
+ * queue that fights every shade in the set. */
+.fill-in-the-blank,
+.rn-fill-in-blank {
+  background-color: rgba(var(--sakura-accent-soft), 0.9);
+  color: rgb(var(--sakura-text));
+}
+
+/*
  * Code blocks.
  *
  * The real work is done by --current-background-color in the token block above,
@@ -307,6 +436,118 @@ html {
  * All three were aimed at an element that was never painting the background,
  * and none of them ever did anything.
  */
+/*
+ * Where the artwork sits, for the whole app.
+ *
+ * The branch layers are fixed at z-index 0, which puts them above everything in
+ * the page that is not positioned. That was fine while they only fell on empty
+ * background and wrong the moment they crossed a heading, and it was fixed here
+ * four separate times by positioning one more element: the tab bar, the pane
+ * toolbar, the reading pane, the title. Each fix worked or did not depending on
+ * whether some ancestor in RemNote's tree happened to trap the subtree, which
+ * is not a thing this theme can keep track of.
+ *
+ * So the app is lifted over the artwork in one move instead. `#main` wraps
+ * everything RemNote renders and is a plain static div, so giving it a positive
+ * z-index puts the entire interface above the layer and nothing inside it needs
+ * to be touched again.
+ *
+ * Two backgrounds have to come off for the artwork to be visible underneath:
+ *
+ *   body   RemNote's boot script sets `background-color: #181820` INLINE, which
+ *          is opaque and is why the layer vanished when it was pushed to -1
+ *   #content   the full page wash. The gradient on html is the ground, so a
+ *          second one here only dims the branches behind it.
+ */
+body {
+  background-color: transparent !important;
+}
+
+#main {
+  position: relative;
+  z-index: 1;
+  background-color: transparent;
+}
+
+#content {
+  background-color: transparent;
+}
+
+/*
+ * The PDF and drawing canvas.
+ *
+ * A PDF opens into a canvas that paints its own workspace, and none of it goes
+ * through the tokens. The two full size fills behind the pages are hard coded
+ * Tailwind colours (`bg-[#232329]` and `bg-[rgb(60,63,65)]`), so the reading
+ * area came out slate grey with the theme running around the outside of it.
+ *
+ * They are picked out by structure rather than by those class names. Matching
+ * the hex would work today, break the first time RemNote nudges the colour, and
+ * read as a coincidence to whoever found the rule afterwards.
+ *
+ * The page canvases themselves are deliberately left alone. That is the
+ * document: RemNote paints the PDF's own background there, and a theme has no
+ * business tinting the thing being read.
+ */
+.editor-drawing-canvas,
+.editor-drawing-canvas > div,
+.drawing-canvas > div:has(> .drawing-canvas-bounds-display-container) {
+  background-color: transparent;
+  background-image: none;
+}
+
+/* The strip of paper the pages are laid out on, behind and between them. */
+.drawing-canvas-bounds-display {
+  background-color: rgba(var(--sakura-elevated), 0.9);
+}
+
+/* The page counter in the corner, which carries a flat grey of its own. */
+div:has(> .drawing-page-page-number) {
+  background-color: rgba(var(--sakura-elevated), 0.94);
+  border: 1px solid rgba(var(--sakura-border), 0.9);
+}
+
+/* The canvas draws its own scrollbar instead of using the browser's, so the
+ * scrollbar rules further down never reach it. */
+.rn-drawing-canvas-fake-scrollbar,
+.dark .rn-drawing-canvas-fake-scrollbar {
+  background-color: rgba(var(--sakura-text-muted), 0.35);
+}
+
+/*
+ * The two surfaces RemNote paints with an inline style:
+ *
+ *   <div id="tab-bar-container" style="background-color: rgb(24, 24, 24)">
+ *   <div class="document-sidebar__container" style="background-color: rgb(24, 24, 24)">
+ *
+ * An inline declaration is the one thing a stylesheet cannot outrank on
+ * specificity, so this is the only !important in the file. Both are full width
+ * chrome, and left alone both sit as a slab of grey against everything else.
+ */
+.document-sidebar__container {
+  background-color: rgba(var(--sakura-surface), 0.78) !important;
+}
+
+/*
+ * The top chrome band, which is the one place the artwork is not welcome.
+ *
+ * Everywhere else a branch behind a translucent surface is the theme working.
+ * Across the tab strip and the breadcrumb bar it is just noise behind small
+ * text you have to read, so these two are taken to near opaque. The layering is
+ * already correct by this point: at 0.62 the branch was not painting over the
+ * bar, it was reading through it.
+ */
+#tab-bar-container {
+  background-color: rgba(var(--sakura-surface), 0.94) !important;
+}
+
+/* The breadcrumb bar carries a class, not an inline style, so it needs no
+ * !important: the utility rule further up is one class and so is this, and
+ * this one comes later. */
+.rn-pane__top-bar {
+  background-color: rgba(var(--sakura-surface), 0.94);
+}
+
 .rn-code-node,
 .rn-editor pre {
   background-color: rgba(var(--sakura-elevated), var(--sakura-code-opacity));

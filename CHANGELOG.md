@@ -3,6 +3,47 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-08-19
+
+### Fixed
+
+- The artwork no longer paints over the interface. The branch layers are fixed
+  at z-index 0, which puts them above every element in the page that is not
+  positioned, so blossoms sat across the document title, the tab strip and the
+  card being reviewed in the flashcard queue. `#main` wraps everything RemNote
+  renders and now carries a positive z-index, which lifts the whole interface
+  over the layer in one move.
+
+  Two backgrounds had to come off for the branches to still read underneath:
+  RemNote's boot script sets an opaque `#181820` inline on `body`, and
+  `#content` carried a second page wash over the gradient that is already on
+  `html`.
+
+- The flashcard queue is themed. Almost none of it went through RemNote's
+  colour tokens: the card counter, the corner buttons and the progress groove
+  use raw grey utilities, the queue backdrop is an inverse surface, and its
+  wrapper uses a Tailwind `dark:` variant that outranks every single class rule
+  in the stylesheet. The card is drawn near opaque with a palette border, which
+  is what separates it from a pale page in light mode.
+
+- The PDF reader is themed. Its workspace is painted with hard coded Tailwind
+  colours rather than tokens, so the reading area stayed slate grey with the
+  theme running around the outside of it. The pages themselves are left alone:
+  that is the document, not chrome.
+
+- Dark mode surfaces built on the elevation tokens now change colour at all.
+  RemNote paints those as gradients, which are background images, so setting
+  only a background colour left its grey on top of the theme's.
+
+- The tab bar and the document sidebar are themed. Both carry an inline
+  background, which is the one thing a stylesheet cannot outrank on specificity.
+
+### Changed
+
+- The tab strip and the breadcrumb bar are drawn near opaque. Everywhere else a
+  branch behind a translucent surface is the point; behind small text you have
+  to read it is noise.
+
 ## [1.2.1] - 2026-08-16
 
 ### Fixed

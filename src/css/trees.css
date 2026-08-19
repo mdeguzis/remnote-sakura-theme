@@ -23,7 +23,11 @@
  */
 
 html::before,
-html::after {
+html::after,
+.rn-queue-container::before,
+.rn-queue-container::after,
+.drawing-canvas:has(.drawing-pdf-viewer)::before,
+.drawing-canvas:has(.drawing-pdf-viewer)::after {
   content: '';
   position: fixed;
   inset: 0;
@@ -40,7 +44,9 @@ html::after {
 }
 
 /* Layer one: the wood. */
-html::before {
+html::before,
+.rn-queue-container::before,
+.drawing-canvas:has(.drawing-pdf-viewer)::before {
   background-color: rgb(var(--sakura-wood));
   mask-image: var(--sakura-branch-top-left-wood), var(--sakura-branch-top-right-wood),
     var(--sakura-branch-bottom-left-wood), var(--sakura-scenery-shop-structure);
@@ -54,7 +60,9 @@ html::before {
 
 /* Layer two: the blossoms, in their own color and slightly stronger, since the
  * flowers are what the theme is actually about. */
-html::after {
+html::after,
+.rn-queue-container::after,
+.drawing-canvas:has(.drawing-pdf-viewer)::after {
   background-color: rgb(var(--sakura-blossom));
   mask-image: var(--sakura-branch-top-left-blossoms), var(--sakura-branch-top-right-blossoms),
     var(--sakura-branch-bottom-left-blossoms), var(--sakura-scenery-shop-lights);
@@ -68,12 +76,65 @@ html::after {
 }
 
 /*
+ * Not over a flashcard.
+ *
+ * On the queue screen the same artwork is drawn from the queue's own element
+ * rather than from html, and the html layers are switched off while that screen
+ * is up.
+ *
+ * The reason is stacking, and it took three wrong answers to get here. A fixed
+ * layer at z-index 0 on html was expected to paint under the queue card and did
+ * the opposite. Dropping it to -1 put it under the card and under the whole
+ * screen with it, invisible, and clearing surface after surface never brought
+ * it back. Both attempts were guesses about where RemNote's stacking contexts
+ * begin.
+ *
+ * Drawn from `.rn-queue-container::before`, the question does not arise. The
+ * layer is a child of the element that wraps the queue, and the card sits in a
+ * z-index 10 descendant of that same element, so the card is above the artwork
+ * by the ordinary rule that a higher z-index wins inside one stacking context.
+ * Nothing here depends on knowing what any ancestor does.
+ *
+ * `.rn-queue-container` only exists on that route, so both halves of the swap
+ * turn themselves off when the queue closes.
+ */
+html:has(.rn-queue-container)::before,
+html:has(.rn-queue-container)::after,
+html:has(.drawing-pdf-viewer)::before,
+html:has(.drawing-pdf-viewer)::after {
+  display: none;
+}
+
+/*
+ * Same swap for a PDF, for the same reason: the pages are what is being read
+ * and the artwork belongs behind them.
+ *
+ * The canvas layer is absolute rather than fixed. The canvas is already a
+ * positioned box of its own, so anchoring to it needs no assumption about which
+ * ancestor a fixed element would end up attached to, and the canvas clips its
+ * own overflow, so the artwork stops at the edge of the reading area instead of
+ * running under the panes around it.
+ *
+ * The pages sit in positioned elements later in the markup than the pseudo, so
+ * they paint over it. The workspace behind them is cleared in base.css, which
+ * is what lets the artwork show through at all.
+ */
+.drawing-canvas:has(.drawing-pdf-viewer)::before,
+.drawing-canvas:has(.drawing-pdf-viewer)::after {
+  position: absolute;
+}
+
+/*
  * On a narrow window the branches eat the reading column, so drop to the two
  * top corners and pull them in.
  */
 @media (max-width: 900px) {
   html::before,
-  html::after {
+  html::after,
+  .rn-queue-container::before,
+  .rn-queue-container::after,
+  .drawing-canvas:has(.drawing-pdf-viewer)::before,
+  .drawing-canvas:has(.drawing-pdf-viewer)::after {
     mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
     -webkit-mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
   }
@@ -85,7 +146,11 @@ html::after {
  */
 @media (max-width: 560px) {
   html::before,
-  html::after {
+  html::after,
+  .rn-queue-container::before,
+  .rn-queue-container::after,
+  .drawing-canvas:has(.drawing-pdf-viewer)::before,
+  .drawing-canvas:has(.drawing-pdf-viewer)::after {
     display: none;
   }
 }

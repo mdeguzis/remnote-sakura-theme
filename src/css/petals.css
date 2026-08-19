@@ -54,6 +54,24 @@ body::after {
 }
 
 /*
+ * Not over a flashcard.
+ *
+ * Everywhere else a petal crossing the text is the whole point. In the queue
+ * there is one card on screen, it is what the reader is being tested on, and a
+ * petal drifting across the answer is something to read around.
+ *
+ * The layer is pushed behind the interface for as long as a queue is on screen
+ * rather than switched off, so petals still drift over the page around the
+ * card, dimmed by whatever surface is in front of them, the same way the
+ * branches read. `.rn-queue-container` only exists on that screen, so this
+ * reverts by itself the moment the queue is closed.
+ */
+html:has(.rn-queue-container) body::before,
+html:has(.rn-queue-container) body::after {
+  z-index: -1;
+}
+
+/*
  * The loop has to land on a whole number of tiles in BOTH axes.
  *
  * A repeating mask only looks continuous where the animation ends on a multiple

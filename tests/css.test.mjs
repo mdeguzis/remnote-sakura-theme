@@ -217,3 +217,118 @@ test('no remote url survives into the stylesheet', () => {
     assert.match(url, /^data:/, `non data url in stylesheet: ${url.slice(0, 60)}`);
   }
 });
+
+test('the token overrides also land on the mode wrapper', () => {
+  // RemNote declares the same tokens on the element that carries the mode
+  // class. A declaration on an element beats one inherited from an ancestor at
+  // any specificity, so overriding on :root alone reaches nothing inside that
+  // wrapper. Losing the doubled class here sends the flashcard queue, and
+  // anything else RemNote scopes that way, back to its own greys.
+  const block = /(?:^|\n)([^{]*)\{[^}]*--rn-clr-background-primary:/.exec(FULL);
+  assert.ok(block, 'token block not found');
+  assert.match(block[1], /\.dark\.dark/, 'token block does not outrank RemNote\'s own .dark rule');
+});
+
+test('surfaces clear RemNote\'s elevation gradient', () => {
+  // In dark mode the elevation tokens are gradients, which are background
+  // IMAGES. A rule that sets only background-color leaves that opaque grey
+  // image painted on top and the surface never changes.
+  const rules = CSS.base.split('}').filter((rule) => /\.rn-clr-background-elevation-/.test(rule));
+  assert.ok(rules.length > 0);
+  for (const rule of rules) {
+    assert.match(rule, /background-image:\s*none/, `elevation rule does not clear the gradient: ${rule.trim().slice(0, 60)}`);
+  }
+});
+
+test('the flashcard card is drawn over the artwork, not through it', () => {
+  // The queue is one card on an otherwise empty screen with a branch behind it.
+  // It needs a higher alpha than a page surface and an edge of its own, or the
+  // artwork reads through the answer and the pale light mode card has no
+  // boundary at all against a pale page.
+  const card = /\.rn-queue\s*\{([^}]*)\}/.exec(CSS.base);
+  assert.ok(card, 'no .rn-queue rule');
+  const alpha = Number.parseFloat(/background-color:\s*rgba\([^,]+,\s*([\d.]+)\)/.exec(card[1])[1]);
+  assert.ok(alpha >= 0.95, `queue card alpha ${alpha} is too low to read an answer through`);
+  assert.match(card[1], /border:\s*1px solid rgba\(var\(--sakura-border\)/, 'queue card has no palette border');
+});
+
+test('petals do not drift over a flashcard', () => {
+  // Everywhere else a petal crossing the text is the effect. Over the one card
+  // the reader is being tested on it is something to read around.
+  assert.match(CSS.petals, /html:has\(\.rn-queue-container\)[\s\S]*?z-index:\s*-1/);
+});
+
+test('RemNote\'s dark mode variants are outranked, not tied', () => {
+  // `dark:rn-clr-background-primary` compiles to `.dark .dark\:rn-clr-...`,
+  // which is two classes. Every plain utility rule here is one, so in dark mode
+  // the variant wins and the surface keeps RemNote's grey. This is what left
+  // the flashcard screen unthemed while the document screen was fine.
+  assert.match(CSS.base, /\.dark \.dark\\:rn-clr-background-primary/);
+});
+
+test('the queue backdrop is reached without repainting every inverse surface', () => {
+  // Inverse surfaces exist to contrast with the page. Overriding the class
+  // outright would flatten tooltips and anything else built on it, so the queue
+  // backdrop is cleared only on the route that mounts a queue.
+  const rule = /html:has\(\.rn-queue-container\) \.rn-clr-background-inverse-primary/;
+  assert.match(CSS.base, rule);
+  const bare = CSS.base.match(/^\.rn-clr-background-inverse-primary\s*\{/m);
+  assert.equal(bare, null, 'inverse-primary is overridden app wide');
+});
+
+test('the queue screen draws its own branches', () => {
+  // Reasoning about z-index against RemNote's wrappers produced the wrong
+  // answer twice: at 0 the branches covered the card, at -1 they vanished with
+  // the rest of the screen. Drawn from the queue's own element they are in the
+  // same stacking context as the card, which sits in a z-index 10 descendant,
+  // so ordinary z-index rules settle it. Both halves of the swap must survive
+  // together: the queue layer without the html layer being hidden doubles the
+  // artwork, and the reverse leaves the screen bare.
+  assert.match(CSS.trees, /\.rn-queue-container::before/);
+  const hidden = /((?:html:has\([^)]+\)::(?:before|after),\s*)*html:has\([^)]+\)::after)\s*\{\s*display:\s*none/.exec(CSS.trees);
+  assert.ok(hidden, 'the html layers are never switched off');
+  assert.match(hidden[1], /html:has\(\.rn-queue-container\)::before/);
+});
+
+test('a PDF gets the same treatment as a flashcard', () => {
+  // The canvas paints its own workspace in a hard coded colour and lays the
+  // pages on top. Without both halves the reading area is either slate grey or
+  // has branches across the page being read.
+  assert.match(CSS.base, /\.drawing-canvas > div:has\(> \.drawing-canvas-bounds-display-container\)/);
+  assert.match(CSS.trees, /\.drawing-canvas:has\(\.drawing-pdf-viewer\)::before/);
+  assert.match(CSS.trees, /html:has\(\.drawing-pdf-viewer\)::before/);
+});
+
+test('the canvas layer is anchored to the canvas, not the viewport', () => {
+  // Fixed would attach it to whichever ancestor happens to be transformed.
+  // Absolute attaches it to the canvas, which clips its own overflow, so the
+  // artwork stops at the edge of the reading area.
+  const rule = /\.drawing-canvas:has\(\.drawing-pdf-viewer\)::before,\s*\.drawing-canvas:has\(\.drawing-pdf-viewer\)::after\s*\{\s*position:\s*absolute/;
+  assert.match(CSS.trees, rule);
+});
+
+test('!important is used only where an inline style has to be beaten', () => {
+  // RemNote paints the tab bar, the document sidebar and body itself with an
+  // inline background, which nothing else can outrank. Anywhere else in this file an
+  // !important would be hiding a specificity problem worth fixing properly.
+  const allowed = ['#tab-bar-container', '.document-sidebar__container', 'body'];
+  const important = [...CSS.base.matchAll(/([^{}]*)\{[^}]*!important/g)].map((m) => m[1].trim());
+  assert.ok(important.length > 0, 'expected the inline style overrides to still be here');
+  for (const selector of important) {
+    for (const part of selector.split(',').map((one) => one.trim())) {
+      assert.ok(allowed.includes(part), `!important on ${part}, which carries no inline background`);
+    }
+  }
+});
+
+test('the whole app is lifted over the artwork in one place', () => {
+  // The branch layers are fixed at z-index 0, above everything unpositioned.
+  // Positioning one more element per complaint fixed the tab bar and missed the
+  // document title, because whether it works depends on which ancestor traps
+  // the subtree. #main wraps everything RemNote renders, so lifting it settles
+  // every screen at once.
+  assert.match(CSS.base, /#main\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*1/);
+  // And the two opaque backgrounds that would otherwise hide the layer.
+  assert.match(CSS.base, /body\s*\{\s*background-color:\s*transparent\s*!important/);
+  assert.match(CSS.base, /#content\s*\{\s*background-color:\s*transparent/);
+});

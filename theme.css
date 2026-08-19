@@ -51,7 +51,9 @@ html:has(.dark) {
   --sakura-petal: 248, 176, 206;
 }
 
-:root {
+:root,
+.light.light,
+.dark.dark {
   --rn-clr-background-primary: rgba(var(--sakura-bg-top), 0.62);
   --rn-clr-background-secondary: rgba(var(--sakura-surface), 0.7);
   --rn-clr-background-tertiary: rgba(var(--sakura-surface), 0.78);
@@ -107,6 +109,8 @@ html {
 .rn-clr-background-elevation-40,
 .rn-clr-background-elevation-50 {
   background-color: rgba(var(--sakura-elevated), 0.94);
+
+  background-image: none;
   backdrop-filter: blur(10px) saturate(120%);
 }
 .rn-clr-background-accent {
@@ -171,6 +175,7 @@ html {
 .rn-sidebar [aria-selected='true'],
 .rn-sidebar [data-selected='true'] {
   background-color: rgba(var(--sakura-accent), 0.26);
+  background-image: none;
 
   backdrop-filter: none;
 }
@@ -211,6 +216,96 @@ html {
 .rn-document-preview {
   background-color: rgba(var(--sakura-elevated), 0.9);
   border-radius: 12px;
+}
+html:has(.rn-queue-container) .rn-clr-background-primary,
+html:has(.rn-queue-container) .rn-clr-background-secondary,
+html:has(.rn-queue-container) .rn-clr-background-inverse-primary,
+html:has(.rn-queue-container) .dark\:rn-clr-background-primary,
+html:has(.rn-queue-container) .content__page,
+html:has(.rn-queue-container) .rn-content-and-right-sidebar {
+  background-color: transparent;
+  background-image: none;
+}
+.dark .dark\:rn-clr-background-primary {
+  background-color: rgba(var(--sakura-bg-top), 0.62);
+  background-image: none;
+}
+.dark .dark\:rn-clr-background-secondary {
+  background-color: rgba(var(--sakura-surface), 0.7);
+  background-image: none;
+}
+.dark .dark\:rn-clr-background-tertiary {
+  background-color: rgba(var(--sakura-surface), 0.78);
+  background-image: none;
+}
+.rn-queue-container,
+.queue-container {
+  background-color: transparent;
+}
+.rn-queue {
+  background-color: rgba(var(--sakura-elevated), 0.97);
+  background-image: none;
+  backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(var(--sakura-border), 0.9);
+  box-shadow: 0 18px 48px rgba(var(--sakura-wood), 0.22);
+}
+.queue__close-button,
+.queue__sidebar-button,
+.queue__badge,
+.rn-queue__card-counter {
+  background-color: rgba(var(--sakura-surface), 0.9);
+  background-image: none;
+  color: rgb(var(--sakura-text));
+  border: 1px solid rgba(var(--sakura-border), 0.9);
+}
+.queue__close-button:hover,
+.queue__sidebar-button:hover {
+  background-color: rgba(var(--sakura-accent), 0.2);
+}
+.queue__progress-bar {
+  background-color: rgba(var(--sakura-border), 0.55);
+}
+.fill-in-the-blank,
+.rn-fill-in-blank {
+  background-color: rgba(var(--sakura-accent-soft), 0.9);
+  color: rgb(var(--sakura-text));
+}
+body {
+  background-color: transparent !important;
+}
+#main {
+  position: relative;
+  z-index: 1;
+  background-color: transparent;
+}
+#content {
+  background-color: transparent;
+}
+.editor-drawing-canvas,
+.editor-drawing-canvas > div,
+.drawing-canvas > div:has(> .drawing-canvas-bounds-display-container) {
+  background-color: transparent;
+  background-image: none;
+}
+.drawing-canvas-bounds-display {
+  background-color: rgba(var(--sakura-elevated), 0.9);
+}
+div:has(> .drawing-page-page-number) {
+  background-color: rgba(var(--sakura-elevated), 0.94);
+  border: 1px solid rgba(var(--sakura-border), 0.9);
+}
+.rn-drawing-canvas-fake-scrollbar,
+.dark .rn-drawing-canvas-fake-scrollbar {
+  background-color: rgba(var(--sakura-text-muted), 0.35);
+}
+.document-sidebar__container {
+  background-color: rgba(var(--sakura-surface), 0.78) !important;
+}
+#tab-bar-container {
+  background-color: rgba(var(--sakura-surface), 0.94) !important;
+}
+.rn-pane__top-bar {
+  background-color: rgba(var(--sakura-surface), 0.94);
 }
 .rn-code-node,
 .rn-editor pre {
@@ -268,7 +363,11 @@ html {
 }
 
 html::before,
-html::after {
+html::after,
+.rn-queue-container::before,
+.rn-queue-container::after,
+.drawing-canvas:has(.drawing-pdf-viewer)::before,
+.drawing-canvas:has(.drawing-pdf-viewer)::after {
   content: '';
   position: fixed;
   inset: 0;
@@ -281,7 +380,9 @@ html::after {
   opacity: var(--sakura-tree-opacity);
   transition: opacity 400ms ease;
 }
-html::before {
+html::before,
+.rn-queue-container::before,
+.drawing-canvas:has(.drawing-pdf-viewer)::before {
   background-color: rgb(var(--sakura-wood));
   mask-image: var(--sakura-branch-top-left-wood), var(--sakura-branch-top-right-wood),
     var(--sakura-branch-bottom-left-wood), var(--sakura-scenery-shop-structure);
@@ -292,7 +393,9 @@ html::before {
   mask-size: 46vw auto, 40vw auto, 34vw auto, 26vw auto;
   -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 26vw auto;
 }
-html::after {
+html::after,
+.rn-queue-container::after,
+.drawing-canvas:has(.drawing-pdf-viewer)::after {
   background-color: rgb(var(--sakura-blossom));
   mask-image: var(--sakura-branch-top-left-blossoms), var(--sakura-branch-top-right-blossoms),
     var(--sakura-branch-bottom-left-blossoms), var(--sakura-scenery-shop-lights);
@@ -304,16 +407,34 @@ html::after {
   -webkit-mask-size: 46vw auto, 40vw auto, 34vw auto, 26vw auto;
   opacity: calc(var(--sakura-tree-opacity) * 1.25);
 }
+html:has(.rn-queue-container)::before,
+html:has(.rn-queue-container)::after,
+html:has(.drawing-pdf-viewer)::before,
+html:has(.drawing-pdf-viewer)::after {
+  display: none;
+}
+.drawing-canvas:has(.drawing-pdf-viewer)::before,
+.drawing-canvas:has(.drawing-pdf-viewer)::after {
+  position: absolute;
+}
 @media (max-width: 900px) {
   html::before,
-  html::after {
+  html::after,
+  .rn-queue-container::before,
+  .rn-queue-container::after,
+  .drawing-canvas:has(.drawing-pdf-viewer)::before,
+  .drawing-canvas:has(.drawing-pdf-viewer)::after {
     mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
     -webkit-mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
   }
 }
 @media (max-width: 560px) {
   html::before,
-  html::after {
+  html::after,
+  .rn-queue-container::before,
+  .rn-queue-container::after,
+  .drawing-canvas:has(.drawing-pdf-viewer)::before,
+  .drawing-canvas:has(.drawing-pdf-viewer)::after {
     display: none;
   }
 }
