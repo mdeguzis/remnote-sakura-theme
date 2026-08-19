@@ -36,17 +36,17 @@
     "react-dom": "^17.0.2"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^26.2.0",
     "@types/react": "^17.0.2",
     "@types/react-dom": "^17.0.2",
-    "bestzip": "^2.2.1",
+    "bestzip": "^3.0.2",
     "copy-webpack-plugin": "^14.0.0",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "esbuild-loader": "^4.3.0",
-    "glob": "^11.0.3",
+    "glob": "^13.0.6",
     "html-webpack-plugin": "^5.6.3",
-    "shx": "^0.3.4",
-    "typescript": "^5.6.3",
+    "shx": "^0.4.0",
+    "typescript": "^7.0.2",
     "webpack": "^5.101.3",
     "webpack-cli": "^7.2.2",
     "webpack-dev-server": "^6.0.0"
