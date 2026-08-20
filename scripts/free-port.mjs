@@ -10,8 +10,14 @@
  * The important restriction is in the name: only OUR server. Blindly killing
  * whatever holds port 8080 would take out someone else's unrelated dev server,
  * which is a far worse failure than the one being fixed. So every candidate is
- * checked against this project directory first, and anything foreign is
- * reported and left alone.
+ * checked first, and anything foreign is reported and left alone.
+ *
+ * "Ours" means this repo OR a sibling RemNote theme. The themes share a port and
+ * only one can be developed at a time, so hitting the other one's server is the
+ * normal case when switching between them, not an accident. Refusing there just
+ * meant reading a pid out of an error message and killing it by hand every time.
+ * A sibling is identified by the `name` in the package.json above its working
+ * directory, which is a much narrower signal than "something on port 8080".
  */
 
 import fs from 'node:fs';
@@ -115,6 +121,52 @@ function belongsToThisProject(pid) {
   return false;
 }
 
+/**
+ * Is this the package name of one of our RemNote themes?
+ *
+ * Deliberately narrow. Matching on "any node process" or "anything under
+ * ~/src" would bring back exactly the failure this script exists to avoid.
+ */
+export function isThemeProjectName(name) {
+  return typeof name === 'string' && /^remnote-[a-z0-9]+(?:-[a-z0-9]+)*-theme$/.test(name);
+}
+
+/**
+ * The package name of the project a process is running in, if any.
+ *
+ * Walks up from the process working directory looking for a package.json. The
+ * server is started from the repo root in practice, but a couple of levels of
+ * tolerance costs nothing and covers being launched from a subdirectory.
+ */
+function projectNameOf(pid) {
+  let dir;
+  try {
+    dir = fs.readlinkSync(`/proc/${pid}/cwd`);
+  } catch {
+    return null;
+  }
+
+  for (let depth = 0; depth < 6 && dir && dir !== path.parse(dir).root; depth++) {
+    const manifest = path.join(dir, 'package.json');
+    if (fs.existsSync(manifest)) {
+      try {
+        return JSON.parse(fs.readFileSync(manifest, 'utf8')).name ?? null;
+      } catch {
+        return null;
+      }
+    }
+    dir = path.dirname(dir);
+  }
+
+  return null;
+}
+
+/** A dev server from one of our other themes, rather than from this repo. */
+function belongsToSiblingTheme(pid) {
+  const name = projectNameOf(pid);
+  return isThemeProjectName(name) ? name : null;
+}
+
 function describe(pid) {
   try {
     const cmd = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').split('\0').filter(Boolean).join(' ');
@@ -133,7 +185,13 @@ async function main() {
   if (pids.size === 0) return;
 
   const ours = [...pids].filter(belongsToThisProject);
-  const foreign = [...pids].filter((pid) => !ours.includes(pid));
+  const siblings = [...pids]
+    .filter((pid) => !ours.includes(pid))
+    .map((pid) => ({ pid, project: belongsToSiblingTheme(pid) }))
+    .filter((entry) => entry.project !== null);
+  const foreign = [...pids].filter(
+    (pid) => !ours.includes(pid) && !siblings.some((entry) => entry.pid === pid)
+  );
 
   if (foreign.length > 0) {
     // Deliberately not killed. Something else on this machine is using the
@@ -144,8 +202,25 @@ async function main() {
     process.exit(1);
   }
 
+  // Stopping another project's server is a real side effect, so it is reported
+  // by name rather than folded in silently with our own leftovers.
+  for (const { pid, project } of siblings) {
+    console.log(`[free-port] port ${PORT} is held by ${project}; stopping it to take over`);
+    console.log(`[free-port]   ${pid}  ${describe(pid)}`);
+  }
+
+  const toStop = [...ours, ...siblings.map((entry) => entry.pid)];
+
   for (const pid of ours) {
     console.log(`[free-port] stopping previous dev server ${pid} (${describe(pid)})`);
+    try {
+      process.kill(pid, 'SIGTERM');
+    } catch (err) {
+      if (err.code !== 'ESRCH') throw err;
+    }
+  }
+
+  for (const { pid } of siblings) {
     try {
       process.kill(pid, 'SIGTERM');
     } catch (err) {
@@ -165,7 +240,7 @@ async function main() {
   }
 
   console.warn(`[free-port] still held after ${GRACE_MS}ms, sending SIGKILL`);
-  for (const pid of ours) {
+  for (const pid of toStop) {
     try {
       process.kill(pid, 'SIGKILL');
     } catch (err) {
@@ -181,4 +256,10 @@ async function main() {
   console.log(`[free-port] port ${PORT} released`);
 }
 
-main();
+// Only when run as a command. This module exports helpers that tests import,
+// and an unguarded call meant importing it KILLED whatever dev server happened
+// to be running -- found exactly that way.
+const invokedDirectly =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedDirectly) main();
