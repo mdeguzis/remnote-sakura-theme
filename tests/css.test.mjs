@@ -332,3 +332,14 @@ test('the whole app is lifted over the artwork in one place', () => {
   assert.match(CSS.base, /body\s*\{\s*background-color:\s*transparent\s*!important/);
   assert.match(CSS.base, /#content\s*\{\s*background-color:\s*transparent/);
 });
+
+test('every backdrop-filter carries its webkit prefix', () => {
+  // Safari took the unprefixed property in version 18. On an older iPad the
+  // frosted surfaces lose their blur entirely, which is the difference between
+  // a panel over a branch and mud. Same failure as the mask prefixes, and it
+  // was found the same way: something looked wrong on a device, not here.
+  const plain = (CSS.base.match(/(?:^|[^-])backdrop-filter:/gm) || []).length;
+  const prefixed = (CSS.base.match(/-webkit-backdrop-filter:/g) || []).length;
+  assert.equal(plain, prefixed, 'a backdrop-filter is missing its -webkit- pair');
+  assert.ok(plain > 0);
+});

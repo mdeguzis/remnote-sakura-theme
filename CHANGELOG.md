@@ -3,6 +3,16 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-08-19
+
+### Fixed
+
+- The frosted surfaces work on iPad again. Every `backdrop-filter` is now paired
+  with a `-webkit-` one: Safari only took the unprefixed property in version 18,
+  so on an older iPad the blur was dropped and translucent panels sat directly
+  on a branch as mud, while the same build looked correct on the desktop. A test
+  keeps the two counts equal, the same guard the mask prefixes already have.
+
 ## [1.2.2] - 2026-08-19
 
 ### Fixed
