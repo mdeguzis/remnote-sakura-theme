@@ -3,6 +3,22 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2026-08-23
+
+### Fixed
+
+- The artwork stays behind a PDF. The branches and the corner shop were painting
+  across the pages, because the canvas layer sat at `z-index: 0` and the pages
+  are unpositioned, which loses to a positioned pseudo-element no matter how
+  late the pages come in the markup. The layer now sits at `z-index: -1` inside
+  an isolated canvas, so it lands behind the document and in front of the page
+  gradient.
+- The corner shop is dropped while the window is split. Every mask is placed in
+  viewport units, so in a half width pane a piece drawn for the corner of a full
+  window landed in the middle of whatever was being read. The branches stay,
+  since they anchor to the edges and still read as edges in a narrow pane, and
+  the shop comes back on its own when the second pane closes.
+
 ## [1.2.3] - 2026-08-19
 
 ### Fixed

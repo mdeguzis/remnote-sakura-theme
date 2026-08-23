@@ -115,13 +115,58 @@ html:has(.drawing-pdf-viewer)::after {
  * own overflow, so the artwork stops at the edge of the reading area instead of
  * running under the panes around it.
  *
- * The pages sit in positioned elements later in the markup than the pseudo, so
- * they paint over it. The workspace behind them is cleared in base.css, which
- * is what lets the artwork show through at all.
+ * The workspace behind the pages is cleared in base.css, which is what lets the
+ * artwork show through at all.
  */
 .drawing-canvas:has(.drawing-pdf-viewer)::before,
 .drawing-canvas:has(.drawing-pdf-viewer)::after {
   position: absolute;
+  /*
+   * Behind the pages, not just behind the workspace fill.
+   *
+   * At z-index 0 the layer painted OVER the pages: a positioned pseudo beats
+   * unpositioned content no matter how late that content comes in the markup,
+   * so branches crossed the text and the shop's lit windows sat on top of a
+   * scanned page. Ordering by markup only ever worked for the positioned
+   * siblings, and the pages are not among them.
+   *
+   * A negative index settles it by rule rather than by DOM order, and the
+   * isolation below is what stops that index escaping the canvas.
+   */
+  z-index: -1;
+}
+
+/*
+ * The canvas has to own the stacking context the artwork sits in.
+ *
+ * Without this, `z-index: -1` is resolved against whichever ancestor happens to
+ * be the nearest stacking context, and the layer disappears behind a surface
+ * further up the tree. Isolating the canvas pins it: the artwork lands directly
+ * behind the canvas's own content and directly in front of the page gradient
+ * showing through its cleared background.
+ */
+.drawing-canvas:has(.drawing-pdf-viewer) {
+  isolation: isolate;
+}
+
+/*
+ * Split panes: no shop.
+ *
+ * Every mask is sized and placed in viewport units, so the shop is drawn to sit
+ * in the corner of a full width window. Split the window and each pane is half
+ * that wide while the artwork is not, so a 26vw shop that belonged in the
+ * corner lands in the middle of whatever is being read, and no amount of
+ * nudging the offsets fixes it for two panes and one pane at once.
+ *
+ * Resolving its two layers to `none` is the same switch the scenery setting
+ * uses, so nothing here needs to know how the masks are stacked. The branches
+ * stay: they are anchored to the edges and still read as edges when a pane is
+ * narrow. This reverts by itself when the second pane closes.
+ */
+html:has(.rn-multiple-window-pane + .rn-multiple-window-pane),
+html:has(.rn-pane + .rn-pane) {
+  --sakura-scenery-shop-structure: none;
+  --sakura-scenery-shop-lights: none;
 }
 
 /*

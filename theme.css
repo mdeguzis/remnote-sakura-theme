@@ -424,6 +424,16 @@ html:has(.drawing-pdf-viewer)::after {
 .drawing-canvas:has(.drawing-pdf-viewer)::before,
 .drawing-canvas:has(.drawing-pdf-viewer)::after {
   position: absolute;
+
+  z-index: -1;
+}
+.drawing-canvas:has(.drawing-pdf-viewer) {
+  isolation: isolate;
+}
+html:has(.rn-multiple-window-pane + .rn-multiple-window-pane),
+html:has(.rn-pane + .rn-pane) {
+  --sakura-scenery-shop-structure: none;
+  --sakura-scenery-shop-lights: none;
 }
 @media (max-width: 900px) {
   html::before,

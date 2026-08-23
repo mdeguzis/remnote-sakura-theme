@@ -299,6 +299,35 @@ test('a PDF gets the same treatment as a flashcard', () => {
   assert.match(CSS.trees, /html:has\(\.drawing-pdf-viewer\)::before/);
 });
 
+test('the canvas layer paints behind the pages, not over them', () => {
+  // A positioned pseudo at z-index 0 beat the page elements no matter where
+  // they came in the markup, so branches and the shop's lit windows landed on
+  // top of the document being read. The negative index only stays inside the
+  // canvas because the canvas isolates, so both halves have to survive together.
+  const layer = /\.drawing-canvas:has\(\.drawing-pdf-viewer\)::before,\s*\.drawing-canvas:has\(\.drawing-pdf-viewer\)::after\s*\{[^}]*z-index:\s*-1/;
+  assert.match(CSS.trees, layer);
+  assert.match(
+    CSS.trees,
+    /\.drawing-canvas:has\(\.drawing-pdf-viewer\)\s*\{[^}]*isolation:\s*isolate/,
+    'without isolation the negative index escapes to an ancestor and the artwork vanishes'
+  );
+});
+
+test('the shop is dropped while the window is split', () => {
+  // Every mask is placed in viewport units, so in a half width pane the shop
+  // lands in the middle of the reading column instead of the corner. Resolving
+  // its two layers to none is the same switch the scenery setting uses.
+  const rule = /html:has\(\.rn-multiple-window-pane \+ \.rn-multiple-window-pane\)[^{]*\{([^}]*)\}/.exec(
+    CSS.trees
+  );
+  assert.ok(rule, 'nothing hides the shop in a split layout');
+  assert.match(rule[1], /--sakura-scenery-shop-structure:\s*none/);
+  assert.match(rule[1], /--sakura-scenery-shop-lights:\s*none/);
+  // The branches are anchored to the edges and still read as edges in a narrow
+  // pane, so they deliberately stay.
+  assert.doesNotMatch(rule[1], /--sakura-branch-/);
+});
+
 test('the canvas layer is anchored to the canvas, not the viewport', () => {
   // Fixed would attach it to whichever ancestor happens to be transformed.
   // Absolute attaches it to the canvas, which clips its own overflow, so the
