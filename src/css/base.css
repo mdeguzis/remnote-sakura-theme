@@ -500,9 +500,14 @@ body {
  * The page canvases themselves are deliberately left alone. That is the
  * document: RemNote paints the PDF's own background there, and a theme has no
  * business tinting the thing being read.
+ *
+ * `.drawing-canvas` is in the list because the artwork is drawn from the
+ * wrapper around it rather than from the canvas (see trees.css for why it has
+ * to be), so a background of its own would come down on top of the branches.
  */
 .editor-drawing-canvas,
 .editor-drawing-canvas > div,
+.drawing-canvas,
 .drawing-canvas > div:has(> .drawing-canvas-bounds-display-container) {
   background-color: transparent;
   background-image: none;

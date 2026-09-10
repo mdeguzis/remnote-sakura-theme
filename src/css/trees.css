@@ -26,8 +26,8 @@ html::before,
 html::after,
 .rn-queue-container::before,
 .rn-queue-container::after,
-.drawing-canvas:has(.drawing-pdf-viewer)::before,
-.drawing-canvas:has(.drawing-pdf-viewer)::after {
+.editor-drawing-canvas:has(.drawing-pdf-viewer)::before,
+.editor-drawing-canvas:has(.drawing-pdf-viewer)::after {
   content: '';
   position: fixed;
   inset: 0;
@@ -46,7 +46,7 @@ html::after,
 /* Layer one: the wood. */
 html::before,
 .rn-queue-container::before,
-.drawing-canvas:has(.drawing-pdf-viewer)::before {
+.editor-drawing-canvas:has(.drawing-pdf-viewer)::before {
   background-color: rgb(var(--sakura-wood));
   mask-image: var(--sakura-branch-top-left-wood), var(--sakura-branch-top-right-wood),
     var(--sakura-branch-bottom-left-wood), var(--sakura-scenery-shop-structure);
@@ -62,7 +62,7 @@ html::before,
  * flowers are what the theme is actually about. */
 html::after,
 .rn-queue-container::after,
-.drawing-canvas:has(.drawing-pdf-viewer)::after {
+.editor-drawing-canvas:has(.drawing-pdf-viewer)::after {
   background-color: rgb(var(--sakura-blossom));
   mask-image: var(--sakura-branch-top-left-blossoms), var(--sakura-branch-top-right-blossoms),
     var(--sakura-branch-bottom-left-blossoms), var(--sakura-scenery-shop-lights);
@@ -109,44 +109,46 @@ html:has(.drawing-pdf-viewer)::after {
  * Same swap for a PDF, for the same reason: the pages are what is being read
  * and the artwork belongs behind them.
  *
- * The canvas layer is absolute rather than fixed. The canvas is already a
- * positioned box of its own, so anchoring to it needs no assumption about which
- * ancestor a fixed element would end up attached to, and the canvas clips its
- * own overflow, so the artwork stops at the edge of the reading area instead of
- * running under the panes around it.
+ * The layer is drawn from `.editor-drawing-canvas`, the box that WRAPS the
+ * canvas, and not from `.drawing-canvas` itself. That is the whole trick, and
+ * it is worth spelling out, because the obvious version of this rule breaks a
+ * toolbar.
  *
- * The workspace behind the pages is cleared in base.css, which is what lets the
- * artwork show through at all.
+ * Inside `.editor-drawing-canvas` the order is:
+ *
+ *   ::before / ::after      absolute, z-index 0   the artwork
+ *   .drawing-canvas         relative, z-index auto  everything RemNote draws
+ *
+ * Both are positioned and neither carries a positive index, so they paint in
+ * tree order and the canvas wins. That puts every page, every highlight and
+ * every popup above the artwork without a single one of them being named here,
+ * and with nothing in the canvas being moved. The workspace fill behind the
+ * pages is cleared in base.css, which is what lets the artwork show through the
+ * canvas at all.
+ *
+ * Absolute rather than fixed: `.editor-drawing-canvas` is positioned and clips
+ * its own overflow, so the artwork stops at the edge of the reading area
+ * instead of running under the panes around it, and nothing has to be assumed
+ * about which ancestor a fixed layer would attach to.
+ *
+ * PREVIOUS VERSION, and why it is not coming back: the pseudos were on
+ * `.drawing-canvas` at `z-index: -1`, with `isolation: isolate` on the canvas
+ * to stop that index escaping to an ancestor. The artwork sat correctly, and
+ * the isolation broke the PDF text menu. RemNote paints saved highlights in
+ * `div.absolute.inset-0.z-[102]`, a child of `.document-drawing-canvas` and so
+ * OUTSIDE the canvas, and the selection toolbar is
+ * `.rn-drawing-pdf-selected-text-menu` at z-index 103 INSIDE it. 103 beats 102
+ * until the canvas isolates, at which point the toolbar collapses to the
+ * canvas's own level in that parent context and the highlight layer covers it.
+ * The layer is `pointer-events: none`, but each highlight rect in it is
+ * `pointer-events: auto`, so a yellow rect lying over the toolbar swallowed the
+ * click while the toolbar stayed in plain sight. Any stacking context on the
+ * canvas does this, isolation or otherwise, which is why the fix is to stay
+ * outside the canvas rather than to pick a different property.
  */
-.drawing-canvas:has(.drawing-pdf-viewer)::before,
-.drawing-canvas:has(.drawing-pdf-viewer)::after {
+.editor-drawing-canvas:has(.drawing-pdf-viewer)::before,
+.editor-drawing-canvas:has(.drawing-pdf-viewer)::after {
   position: absolute;
-  /*
-   * Behind the pages, not just behind the workspace fill.
-   *
-   * At z-index 0 the layer painted OVER the pages: a positioned pseudo beats
-   * unpositioned content no matter how late that content comes in the markup,
-   * so branches crossed the text and the shop's lit windows sat on top of a
-   * scanned page. Ordering by markup only ever worked for the positioned
-   * siblings, and the pages are not among them.
-   *
-   * A negative index settles it by rule rather than by DOM order, and the
-   * isolation below is what stops that index escaping the canvas.
-   */
-  z-index: -1;
-}
-
-/*
- * The canvas has to own the stacking context the artwork sits in.
- *
- * Without this, `z-index: -1` is resolved against whichever ancestor happens to
- * be the nearest stacking context, and the layer disappears behind a surface
- * further up the tree. Isolating the canvas pins it: the artwork lands directly
- * behind the canvas's own content and directly in front of the page gradient
- * showing through its cleared background.
- */
-.drawing-canvas:has(.drawing-pdf-viewer) {
-  isolation: isolate;
 }
 
 /*
@@ -178,8 +180,8 @@ html:has(.rn-pane + .rn-pane) {
   html::after,
   .rn-queue-container::before,
   .rn-queue-container::after,
-  .drawing-canvas:has(.drawing-pdf-viewer)::before,
-  .drawing-canvas:has(.drawing-pdf-viewer)::after {
+  .editor-drawing-canvas:has(.drawing-pdf-viewer)::before,
+  .editor-drawing-canvas:has(.drawing-pdf-viewer)::after {
     mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
     -webkit-mask-size: 62vw auto, 56vw auto, 0 0, 44vw auto;
   }
@@ -194,8 +196,8 @@ html:has(.rn-pane + .rn-pane) {
   html::after,
   .rn-queue-container::before,
   .rn-queue-container::after,
-  .drawing-canvas:has(.drawing-pdf-viewer)::before,
-  .drawing-canvas:has(.drawing-pdf-viewer)::after {
+  .editor-drawing-canvas:has(.drawing-pdf-viewer)::before,
+  .editor-drawing-canvas:has(.drawing-pdf-viewer)::after {
     display: none;
   }
 }

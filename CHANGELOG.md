@@ -3,6 +3,20 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-09-10
+
+### Fixed
+
+- The PDF selection toolbar responds again. Highlight, AI Cards and Explain were
+  drawn in the right place and did nothing when clicked, on any page that
+  already had a highlight on it. 1.2.4 isolated the drawing canvas so the
+  artwork could sit behind the pages, and isolating it collapsed the toolbar
+  down to the canvas's own level in the layer above, where RemNote paints saved
+  highlights. Each highlight rectangle takes pointer events, so one lying over
+  the toolbar swallowed the click while the toolbar stayed in plain sight. The
+  artwork is now drawn from the box around the canvas instead, which puts it
+  behind the pages by ordinary paint order and leaves the canvas untouched.
+
 ## [1.2.4] - 2026-08-23
 
 ### Fixed

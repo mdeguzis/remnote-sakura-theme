@@ -295,22 +295,74 @@ test('a PDF gets the same treatment as a flashcard', () => {
   // pages on top. Without both halves the reading area is either slate grey or
   // has branches across the page being read.
   assert.match(CSS.base, /\.drawing-canvas > div:has\(> \.drawing-canvas-bounds-display-container\)/);
-  assert.match(CSS.trees, /\.drawing-canvas:has\(\.drawing-pdf-viewer\)::before/);
+  assert.match(CSS.trees, /\.editor-drawing-canvas:has\(\.drawing-pdf-viewer\)::before/);
   assert.match(CSS.trees, /html:has\(\.drawing-pdf-viewer\)::before/);
 });
 
-test('the canvas layer paints behind the pages, not over them', () => {
-  // A positioned pseudo at z-index 0 beat the page elements no matter where
-  // they came in the markup, so branches and the shop's lit windows landed on
-  // top of the document being read. The negative index only stays inside the
-  // canvas because the canvas isolates, so both halves have to survive together.
-  const layer = /\.drawing-canvas:has\(\.drawing-pdf-viewer\)::before,\s*\.drawing-canvas:has\(\.drawing-pdf-viewer\)::after\s*\{[^}]*z-index:\s*-1/;
-  assert.match(CSS.trees, layer);
+test('nothing in this file puts a stacking context on the PDF canvas', () => {
+  // `isolation: isolate` on `.drawing-canvas` put the artwork behind the pages
+  // and made the PDF text menu unclickable with it: RemNote's saved highlight
+  // layer sits outside the canvas at z-index 102, the selection toolbar sits
+  // inside it at 103, and isolating the canvas drops the toolbar under the
+  // highlights, whose rects are pointer-events: auto. The toolbar stayed
+  // visible and stopped responding. Any stacking context on the canvas does
+  // this, so the test is on the canvas, not on the one property that caused it.
+  const canvas = [...CSS.trees.matchAll(/([^{}]*)\{([^}]*)\}/g)].filter(([, selector]) =>
+    /\.drawing-canvas\b(?!-)/.test(selector) && !/\.editor-drawing-canvas/.test(selector)
+  );
+  assert.deepEqual(canvas, [], 'the PDF canvas is styled here again, which is how the toolbar broke');
+  assert.doesNotMatch(CSS.trees, /isolation:/);
+  assert.doesNotMatch(CSS.trees, /z-index:\s*-/);
+});
+
+test('the canvas layer paints behind everything RemNote draws in the canvas', () => {
+  // Drawn from the wrapper, the artwork and `.drawing-canvas` are both
+  // positioned at an auto or zero index, so they paint in tree order and the
+  // canvas comes second. That is what keeps the pages, the highlights and the
+  // popups above the branches without naming any of them and without touching
+  // anything inside the canvas.
+  const layer = /\.editor-drawing-canvas:has\(\.drawing-pdf-viewer\)::before,\s*\.editor-drawing-canvas:has\(\.drawing-pdf-viewer\)::after\s*\{\s*position:\s*absolute;\s*\}/;
   assert.match(
     CSS.trees,
-    /\.drawing-canvas:has\(\.drawing-pdf-viewer\)\s*\{[^}]*isolation:\s*isolate/,
-    'without isolation the negative index escapes to an ancestor and the artwork vanishes'
+    layer,
+    'the PDF rule carries something besides position, and the shared z-index of 0 is what makes tree order decide'
   );
+});
+
+test('only our own pseudo-elements are given a stacking context', () => {
+  // How the PDF toolbar broke, generalised.
+  //
+  // `isolation: isolate` on `.drawing-canvas` was there to hold the artwork's
+  // negative index inside the canvas. It also collapsed everything the canvas
+  // contains onto the canvas's own level, so the selection toolbar at z-index
+  // 103 lost to a highlight layer at 102 that hangs off an ancestor. The
+  // toolbar stayed visible, the highlight rectangles over it took the click,
+  // and nothing about the CSS looked wrong.
+  //
+  // A theme cannot know which of RemNote's elements is a container for a popup
+  // that has to escape it, so it does not get to guess: a stacking context
+  // goes on a pseudo-element we created, and nowhere else. The two exceptions
+  // are named, and one of them is the lift that this whole file depends on.
+  //
+  // backdrop-filter is exempt. It forms a context too, and on a container it
+  // would carry the same risk, but it is the theme's material and it only ever
+  // goes on a leaf surface. If it ever lands on a wrapper, this comment is the
+  // one to remember.
+  const ALLOWED = ['#main'];
+  const TRAPS = /(?:^|[;{\s])(isolation|transform|filter|perspective|mix-blend-mode|contain|will-change|opacity|z-index)\s*:/;
+
+  for (const [fragment, css] of Object.entries(CSS)) {
+    for (const [, selector, body] of css.replace(/@media[^{]*\{/g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const trap = TRAPS.exec(body);
+      if (!trap) continue;
+      for (const part of selector.split(',').map((one) => one.trim().replace(/\s+/g, ' '))) {
+        assert.ok(
+          part.endsWith('::before') || part.endsWith('::after') || ALLOWED.includes(part),
+          `${fragment}: ${trap[1]} on ${part}, a RemNote element, which can trap a popup inside it`
+        );
+      }
+    }
+  }
 });
 
 test('the shop is dropped while the window is split', () => {
@@ -332,7 +384,7 @@ test('the canvas layer is anchored to the canvas, not the viewport', () => {
   // Fixed would attach it to whichever ancestor happens to be transformed.
   // Absolute attaches it to the canvas, which clips its own overflow, so the
   // artwork stops at the edge of the reading area.
-  const rule = /\.drawing-canvas:has\(\.drawing-pdf-viewer\)::before,\s*\.drawing-canvas:has\(\.drawing-pdf-viewer\)::after\s*\{\s*position:\s*absolute/;
+  const rule = /\.editor-drawing-canvas:has\(\.drawing-pdf-viewer\)::before,\s*\.editor-drawing-canvas:has\(\.drawing-pdf-viewer\)::after\s*\{\s*position:\s*absolute/;
   assert.match(CSS.trees, rule);
 });
 
