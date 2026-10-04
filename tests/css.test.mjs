@@ -52,15 +52,44 @@ test('braces balance in the composed stylesheet', () => {
   assert.equal((FULL.match(/\{/g) || []).length, (FULL.match(/\}/g) || []).length);
 });
 
+/**
+ * Everything one selector ends up with, across every rule in a fragment.
+ *
+ * The layers are built from a shared block plus per-route overrides, so no
+ * single rule carries the whole picture: the canvas petal layer gets its
+ * position from one rule and its pointer-events from another. A test that reads
+ * rules in isolation either misses the override or fails on it.
+ */
+function declarationsBySelector(css) {
+  const merged = new Map();
+  for (const [, selector, body] of css.replace(/@media[^{]*\{/g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    for (const part of selector.split(',').map((one) => one.trim().replace(/\s+/g, ' '))) {
+      if (!part) continue;
+      merged.set(part, (merged.get(part) || '') + body);
+    }
+  }
+  return merged;
+}
+
 test('the decorative layers can never intercept input', () => {
-  // Full viewport fixed elements sit over the interface. Without
-  // pointer-events: none they would swallow every click in the app.
+  // Full viewport layers sit over the interface. Without pointer-events: none
+  // they would swallow every click in the app.
+  //
+  // Read per selector rather than per rule, because a layer can be positioned
+  // in one rule and given its pointer-events in another. Absolute counts as
+  // well as fixed: the PDF layers are absolute, and an absolute layer over the
+  // pages would eat a click on a highlight just as happily.
   for (const name of ['trees', 'petals']) {
-    const rules = CSS[name].split('}');
-    const positioned = rules.filter((rule) => /position:\s*fixed/.test(rule));
-    assert.ok(positioned.length > 0, `${name}.css declares no fixed layer`);
-    for (const rule of positioned) {
-      assert.match(rule, /pointer-events:\s*none/, `${name}.css has a fixed layer without pointer-events: none`);
+    const positioned = [...declarationsBySelector(CSS[name])].filter(([, body]) =>
+      /position:\s*(fixed|absolute)/.test(body)
+    );
+    assert.ok(positioned.length > 0, `${name}.css declares no positioned layer`);
+    for (const [selector, body] of positioned) {
+      assert.match(
+        body,
+        /pointer-events:\s*none/,
+        `${name}.css positions ${selector} without pointer-events: none`
+      );
     }
   }
 });
@@ -256,6 +285,149 @@ test('petals do not drift over a flashcard', () => {
   // Everywhere else a petal crossing the text is the effect. Over the one card
   // the reader is being tested on it is something to read around.
   assert.match(CSS.petals, /html:has\(\.rn-queue-container\)[\s\S]*?z-index:\s*-1/);
+});
+
+test('the petals are drawn from inside the canvas on a PDF, not pushed behind', () => {
+  // Issue #8, and the first fix for it, which was wrong in a way worth keeping
+  // a test on.
+  //
+  // Pushing the body layers to z-index -1, the way the queue does, put them
+  // under the pane's translucent page wash and the petals stopped falling
+  // anywhere at all. The queue gets away with it only because base.css clears
+  // that wash on the queue route. So on a PDF the body layers are switched off
+  // and the same artwork is drawn from an element inside the canvas instead.
+  // Both halves have to survive together: without the first the petals double,
+  // without the second they are gone.
+  const HOST =
+    '.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)';
+
+  for (const pseudo of ['::before', '::after']) {
+    assert.ok(
+      CSS.petals.includes(`${HOST}${pseudo}`),
+      `the canvas layer is not drawn on ${pseudo}`
+    );
+  }
+
+  const hidden = /html:has\(\.drawing-pdf-viewer\) body::before,\s*html:has\(\.drawing-pdf-viewer\) body::after\s*\{\s*display:\s*none/;
+  assert.match(CSS.petals, hidden, 'the body layers still run while a PDF is open');
+
+  assert.doesNotMatch(
+    CSS.petals,
+    /html:has\(\.drawing-pdf-viewer\) body::before,\s*html:has\(\.drawing-pdf-viewer\) body::after\s*\{[^}]*z-index:\s*-1/,
+    'the petals are behind the page wash again, which reads as them being switched off'
+  );
+});
+
+test('the canvas petal layer is a sibling of the pages, and carries no index', () => {
+  // A `::after` is its parent's last child, so a layer drawn from an ANCESTOR
+  // of the pages paints over them. The branches get away with that because
+  // every piece of that artwork is anchored to a corner and never reaches the
+  // middle of the window. A full coverage repeating layer does not: the far
+  // layer landed on the page the first time this was tried from the wrapper.
+  //
+  // The workspace fill is a sibling that comes before the pages, so tree order
+  // alone puts both pseudo-elements under every page, highlight and popup. That
+  // only holds while there is no z-index: a number here would sort the layer
+  // against the pages explicitly and form a stacking context next to the canvas,
+  // which is what cost 1.2.4 the PDF selection toolbar.
+  const HOST =
+    '.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)';
+
+  // Matched by the whole selector list rather than by a pattern, so this cannot
+  // accidentally land on the tail of the shared block, which names the same two
+  // pseudo-elements after the body ones.
+  const own = [...CSS.petals.matchAll(/([^{}]*)\{([^}]*)\}/g)].filter(
+    ([, selector]) =>
+      selector
+        .split(',')
+        .map((one) => one.trim())
+        .join('|') === `${HOST}::before|${HOST}::after`
+  );
+  assert.equal(own.length, 1, 'the canvas petal layer is never re-anchored to the canvas');
+
+  const match = own[0];
+  assert.match(match[2], /position:\s*absolute/, 'fixed would anchor it to the viewport, not the canvas');
+  assert.match(match[2], /z-index:\s*auto/, 'the canvas layer must not carry an index of its own');
+
+  // And nothing in this file may name the canvas element itself, same rule the
+  // branches are held to.
+  const canvas = [...CSS.petals.matchAll(/([^{}]*)\{([^}]*)\}/g)].filter(([, selector]) =>
+    /\.drawing-canvas\b(?!-)/.test(selector) && !/\.editor-drawing-canvas/.test(selector)
+  );
+  assert.deepEqual(canvas, [], 'the PDF canvas is styled here, which is how the toolbar broke in 1.2.4');
+});
+
+test('every petal layer rule reaches the canvas host too', () => {
+  // The layer is assembled from three rules: the shared block gives it a box
+  // and pointer-events, the near and far blocks give it a mask, a colour and an
+  // animation, and the reduced-motion block takes the animation back. The body
+  // layers and the canvas layers must appear in all of them.
+  //
+  // This is the failure mode with no symptom to look at: add the host to the
+  // shared block and forget the near block, and the layer is a correctly
+  // positioned, correctly stacked element painting nothing at all, because a
+  // mask layer with no mask-image is invisible. Nothing errors, and the route
+  // it affects is the one route a test cannot see.
+  const HOST =
+    '.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)';
+
+  const rules = [...CSS.petals.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, selector]) =>
+    selector.split(',').map((one) => one.trim().replace(/\s+/g, ' '))
+  );
+
+  for (const pseudo of ['::before', '::after']) {
+    // Only the rules that style the layer ITSELF, which is the bare body
+    // selector. A route-scoped override like `html:has(...) body::before` is a
+    // different part and deliberately does not carry the host.
+    const shared = rules.filter((parts) => parts.includes(`body${pseudo}`));
+    assert.ok(shared.length >= 3, `expected the body${pseudo} layer to be built from several rules`);
+
+    for (const parts of shared) {
+      assert.ok(
+        parts.includes(`${HOST}${pseudo}`),
+        `a rule styles body${pseudo} but not the canvas layer: ${parts.join(', ').slice(0, 110)}`
+      );
+    }
+  }
+});
+
+test('the petals are only pushed behind the interface on the queue route', () => {
+  // z-index: -1 puts the layer under the pane's page wash, which is why it is
+  // the queue's answer and nobody else's: base.css clears that wash while a
+  // queue is up. Applying it to the canvas layer would bury that one under the
+  // workspace fill it is drawn on, and the petals would silently stop.
+  const behind = [...CSS.petals.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(([, , body]) =>
+    /z-index:\s*-/.test(body)
+  );
+  assert.equal(behind.length, 1, 'expected exactly one rule pushing petals behind the interface');
+
+  const parts = behind[0][1].split(',').map((one) => one.trim().replace(/\s+/g, ' '));
+  assert.deepEqual(parts, [
+    'html:has(.rn-queue-container) body::before',
+    'html:has(.rn-queue-container) body::after',
+  ]);
+});
+
+test('the workspace fill is identified the same way everywhere', () => {
+  // Two files have to agree on which element RemNote fills the canvas with:
+  // base.css clears its hard coded grey, petals.css draws the layer from it.
+  // Its own class is a hashed Tailwind arbitrary value, so both pick it out by
+  // the container it holds. If RemNote renames that container, both rules die
+  // together, and whichever one is updated alone leaves either a grey slab over
+  // the artwork or petals drawn on nothing.
+  const MARKER = 'div:has(> .drawing-canvas-bounds-display-container)';
+  assert.ok(CSS.base.includes(MARKER), 'base.css no longer clears the workspace fill');
+  assert.ok(CSS.petals.includes(MARKER), 'petals.css no longer draws from the workspace fill');
+});
+
+test('the canvas petal layer ships only when the petals do', () => {
+  // The fragment is omitted entirely when petals are off, so a stylesheet with
+  // petals disabled must not carry a canvas layer either. An orphan here would
+  // be a masked, animated element mounted on every PDF for someone who turned
+  // the effect off.
+  const MARKER = '.drawing-canvas-bounds-display-container)::before';
+  assert.ok(compose({ ...DEFAULT_OPTIONS, petals: true }).includes(MARKER));
+  assert.ok(!compose({ ...DEFAULT_OPTIONS, petals: false }).includes(MARKER));
 });
 
 test('RemNote\'s dark mode variants are outranked, not tied', () => {

@@ -16,10 +16,16 @@
  * These sit ABOVE the interface at a low z-index with pointer-events: none.
  * Petals passing in front of text is the effect; blocking a click is not, and
  * pointer-events makes that impossible.
+ *
+ * On a PDF the layers are drawn from an element inside the drawing canvas
+ * instead, which is the long selector repeated through this file. See the PDF
+ * section below for why it is that element and not a shorter one.
  */
 
 body::before,
-body::after {
+body::after,
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::before,
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::after {
   content: '';
   position: fixed;
   inset: -12vh 0 -12vh 0;
@@ -32,7 +38,8 @@ body::after {
 }
 
 /* Near layer: larger, faster, more opaque. */
-body::before {
+body::before,
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::before {
   background-color: rgb(var(--sakura-petal));
   opacity: calc(var(--sakura-petal-opacity) * 1);
   mask-image: var(--sakura-petals-near);
@@ -43,7 +50,8 @@ body::before {
 }
 
 /* Far layer: smaller, slower, fainter, drifting the other way. */
-body::after {
+body::after,
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::after {
   background-color: rgb(var(--sakura-petal));
   opacity: calc(var(--sakura-petal-opacity) * 0.62);
   mask-image: var(--sakura-petals-far);
@@ -65,10 +73,68 @@ body::after {
  * card, dimmed by whatever surface is in front of them, the same way the
  * branches read. `.rn-queue-container` only exists on that screen, so this
  * reverts by itself the moment the queue is closed.
+ *
+ * This works on the queue and nowhere else, which is the point of the next
+ * section. base.css clears the page surfaces to transparent while a queue is
+ * up, so there is nothing left in front of a layer at -1. On every other screen
+ * the page wash is still there and a layer behind it is gone, not dimmed.
  */
 html:has(.rn-queue-container) body::before,
 html:has(.rn-queue-container) body::after {
   z-index: -1;
+}
+
+/*
+ * Not over a PDF page, and not at the cost of the petals either.
+ *
+ * Issue #8. The branches were taken off the pages in 1.2.4 by drawing them from
+ * the box around the drawing canvas, and the petals kept drifting across the
+ * document at every opacity setting, which is what was reported.
+ *
+ * The queue's answer does not transfer. Pushing the body layers behind the
+ * interface removes them from the document and from the whole screen with it:
+ * the pane carries a translucent page wash, the queue route clears that wash
+ * and the PDF route does not, so a layer at -1 ends up under it and reads as
+ * the petals being switched off. That was tried first and it is exactly what
+ * came back from testing.
+ *
+ * The branches' answer does not transfer either. They are drawn from an
+ * ANCESTOR of the pages, which works for them only because every piece of that
+ * artwork is anchored to a corner and never reaches the middle of the window
+ * where the pages are. A `::after` is its parent's last child, so an ancestor's
+ * after layer paints OVER the pages. A full coverage repeating layer finds that
+ * immediately: the far layer landed on the page while the near layer did not.
+ *
+ * So the host has to be a SIBLING that comes before the pages rather than an
+ * ancestor of them. RemNote lays the canvas out as
+ *
+ *   .drawing-canvas
+ *     div > .drawing-canvas-bounds-display-container   the workspace fill
+ *     .drawing-canvas-pdf-pages-and-div-targets        the pages
+ *
+ * and the fill comes first, so both of its pseudo-elements paint before every
+ * page, every highlight and every popup, by tree order alone.
+ *
+ * `z-index: auto` rather than a number, and absolute rather than fixed: with no
+ * index at all there is no stacking context anywhere near the canvas, which is
+ * the trap that cost 1.2.4 the PDF selection toolbar. Tree order is doing all
+ * the work here and it needs no help.
+ *
+ * The fill is picked out by what it contains rather than by its own class,
+ * which is a hashed Tailwind arbitrary value, and reached through
+ * `.editor-drawing-canvas` rather than `.drawing-canvas` so that nothing in
+ * this file names the canvas element itself.
+ */
+html:has(.drawing-pdf-viewer) body::before,
+html:has(.drawing-pdf-viewer) body::after {
+  display: none;
+}
+
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::before,
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::after {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
 }
 
 /*
@@ -117,7 +183,9 @@ html:has(.rn-queue-container) body::after {
  */
 @media (prefers-reduced-motion: reduce) {
   body::before,
-  body::after {
+  body::after,
+  .editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::before,
+  .editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::after {
     animation: none;
   }
 }

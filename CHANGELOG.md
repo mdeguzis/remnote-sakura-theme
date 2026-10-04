@@ -3,6 +3,22 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2026-10-04
+
+### Fixed
+
+- The falling petals stay off a PDF page. The branches were taken off the pages
+  in 1.2.4, and the petals kept drifting across the document at every opacity
+  setting. They are now drawn from the workspace fill inside the drawing canvas
+  while a PDF is open, which is a sibling of the pages rather than an ancestor
+  of them, so tree order alone puts both layers under every page, highlight and
+  popup. Petals still fall across the reading area around the document.
+
+  Pushing the layers behind the interface, the way the flashcard queue does, was
+  tried first and is not the fix: the pane keeps a translucent page wash on this
+  route that the queue route clears, so the petals disappeared from the whole
+  screen rather than from the page.
+
 ## [1.2.5] - 2026-09-10
 
 ### Fixed

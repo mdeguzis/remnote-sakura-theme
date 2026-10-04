@@ -91,6 +91,7 @@ Then Settings, Plugins, Build, Develop from localhost, and enter `http://localho
 | `npm run test:compose` | Only the option and stylesheet composition tests |
 | `npm run test:css` | Only the CSS integrity tests |
 | `npm run test:art` | Only the artwork tests |
+| `npm run test:render` | Only the browser render tests. Needs Firefox or Chrome on PATH, and skips without one |
 | `npm run check-types` | TypeScript type check |
 | `npm run verify` | Type check and test. Run before pushing |
 | `npm run build:theme` | `SakuraTheme.zip` for the theme marketplace |

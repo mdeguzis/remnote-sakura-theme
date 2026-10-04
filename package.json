@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "remnote-sakura-theme",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "license": "MIT",
   "type": "module",
   "description": "Cherry blossom theme for RemNote. Branches behind a translucent interface, with optional falling petals.",
@@ -16,6 +16,7 @@
     "test:watch": "npm run sources && node --test --watch tests/*.test.mjs",
     "test:compose": "npm run sources && node --test tests/compose.test.mjs",
     "test:css": "npm run sources && node --test tests/css.test.mjs",
+    "test:render": "npm run sources && node --test tests/render.test.mjs",
     "test:art": "node --test tests/art.test.mjs",
     "check-types": "npm run sources && tsc",
     "verify": "npm run check-types && npm test",
