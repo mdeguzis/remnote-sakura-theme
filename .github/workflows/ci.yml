@@ -61,4 +61,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high
+
+      # Fails on any high or critical advisory that is not written down in
+      # security/audit-exceptions.json, and also on an exception that has gone
+      # stale or is due for review, so an accepted advisory cannot be forgotten.
+      - run: npm run audit

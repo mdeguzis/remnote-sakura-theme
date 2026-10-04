@@ -1,0 +1,35 @@
+{
+  "$comment": [
+    "High and critical npm advisories the CI gate is allowed to pass, with the reason.",
+    "An entry is only legitimate while there is genuinely nothing to upgrade to.",
+    "scripts/audit-gate.mjs fails if an entry here no longer matches a live advisory,",
+    "so an exception cannot outlive the problem it was written for, and fails again",
+    "once `review` passes so it cannot quietly become permanent."
+  ],
+  "exceptions": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "accepted": "2026-10-04",
+      "review": "2026-12-04",
+      "why": [
+        "No patched version exists. The advisory covers braces <= 3.0.3 and 3.0.3 is the",
+        "latest version published, so every consumer is affected and there is nothing to",
+        "upgrade to. npm's suggested fix is a downgrade of webpack-dev-server to 1.14.1",
+        "and shx to 0.3.4, which is years of other advisories plus a broken build.",
+        "",
+        "Reached only through devDependencies: shx -> shelljs -> fast-glob -> micromatch,",
+        "and webpack-cli -> webpack-dev-server -> http-proxy-middleware -> micromatch.",
+        "Nothing here is in the published theme or plugin zip, which contain CSS, a",
+        "manifest, a logo and the bundled widget. The reachable attack is a denial of",
+        "service from a deeply nested glob pattern, and the only globs these see are the",
+        "ones written in this repo's own scripts.",
+        "",
+        "Remove this entry as soon as braces publishes a fix. The gate will tell you:",
+        "once the advisory stops matching, this exception is reported as stale and CI",
+        "fails until it is deleted."
+      ]
+    }
+  ]
+}

@@ -29,7 +29,8 @@
     "test:contrast": "node --test tests/contrast.test.mjs",
     "predev": "node scripts/free-port.mjs",
     "predev:lan": "node scripts/free-port.mjs",
-    "free-port": "node scripts/free-port.mjs"
+    "free-port": "node scripts/free-port.mjs",
+    "audit": "node scripts/audit-gate.mjs"
   },
   "dependencies": {
     "@remnote/plugin-sdk": "^0.0.46",

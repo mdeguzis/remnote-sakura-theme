@@ -94,6 +94,7 @@ Then Settings, Plugins, Build, Develop from localhost, and enter `http://localho
 | `npm run test:render` | Only the browser render tests. Needs Firefox or Chrome on PATH, and skips without one |
 | `npm run check-types` | TypeScript type check |
 | `npm run verify` | Type check and test. Run before pushing |
+| `npm run audit` | Security gate. Fails on any high or critical advisory not recorded in `security/audit-exceptions.json` |
 | `npm run build:theme` | `SakuraTheme.zip` for the theme marketplace |
 | `npm run build:plugin` | `SakuraPlugin.zip` for the plugin marketplace |
 | `npm run build` | Both |
