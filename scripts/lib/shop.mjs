@@ -130,7 +130,16 @@ function structure() {
   parts.push(`<rect x="${DOOR.left}" y="${DOOR.top}" width="${DOOR.right - DOOR.left}" height="${GROUND - DOOR.top}" rx="4"/>`);
 
   // Potted plant to the right of the shop, leafy rather than three blobs.
-  parts.push(`<path d="M530,${GROUND} L536,314 L568,314 L574,${GROUND} Z"/>`);
+  //
+  // Stem and stalks come first, then the leaves on top of them. Without them
+  // the lowest leaf floated 30px clear of the rim with nothing in between, and
+  // at 26vw that reads as leaves hanging in the air above a pot. The bamboo
+  // beside it has always drawn its culms, so the plant was the odd one out.
+  const POT = { x: 552, rim: 314, crown: 248 };
+  parts.push(`<path d="M530,${GROUND} L536,${POT.rim} L568,${POT.rim} L574,${GROUND} Z"/>`);
+  parts.push(
+    `<rect x="${POT.x - 2.5}" y="${POT.crown}" width="5" height="${POT.rim - POT.crown + 4}" rx="2.5"/>`
+  );
   for (const [dx, dy, rx, ry, rot] of [
     [-16, -30, 15, 7, -28],
     [16, -34, 15, 7, 26],
@@ -138,8 +147,15 @@ function structure() {
     [10, -56, 13, 6, 54],
     [0, -66, 11, 6, 0],
   ]) {
-    const cx = 552 + dx;
-    const cy = 314 + dy;
+    const cx = POT.x + dx;
+    const cy = POT.rim + dy;
+    // The crown leaf sits on the stem already and needs no stalk of its own.
+    if (dx !== 0) {
+      parts.push(
+        `<path d="M${POT.x},${cy + 8} L${cx},${cy}" fill="none" stroke="#000" ` +
+          `stroke-width="3" stroke-linecap="round"/>`
+      );
+    }
     parts.push(`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${rot} ${cx} ${cy})"/>`);
   }
 

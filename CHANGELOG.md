@@ -19,6 +19,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   route that the queue route clears, so the petals disappeared from the whole
   screen rather than from the page.
 
+- The potted plant by the shop has a stem. Its leaves were drawn above the pot
+  with nothing joining the two, so at a glance they hung in the air.
+
 ## [1.2.5] - 2026-09-10
 
 ### Fixed
