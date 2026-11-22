@@ -107,8 +107,12 @@ test('the petal loop lands on whole tiles in both axes', () => {
   assert.equal(keyframes.length, 2, 'expected two petal keyframe blocks');
 
   for (const block of keyframes) {
+    // One value per mask layer: the tile and its alt each have to close the
+    // loop on their own, so each is checked separately. No calc here contains
+    // a comma, so splitting on commas splits layers.
     const destinations = [...block.matchAll(/(?:^|[^-])mask-position:\s*([^;]+);/g)]
-      .map((m) => m[1].trim())
+      .flatMap((m) => m[1].split(','))
+      .map((value) => value.replace(/\s+/g, ' ').trim())
       .filter((value) => value !== '0 0');
 
     assert.ok(destinations.length > 0, 'no destination offset found');
@@ -232,9 +236,21 @@ test('assets are inlined as svg data uris', () => {
 });
 
 test('the composed stylesheet stays within a sane size', () => {
-  // The artwork dominates. If this jumps, a branch got denser than intended.
-  const kb = Buffer.byteLength(FULL, 'utf8') / 1024;
-  assert.ok(kb < 80, `composed stylesheet is ${kb.toFixed(0)} KB, over the 80 KB budget`);
+  // The artwork dominates. If this jumps, a branch or a falling tile got
+  // denser than intended. Both seasons are pinned: composing with today's date
+  // would measure a different stylesheet in December than in July. Winter is
+  // the worst case, because snow tiles hold more pieces than petal tiles.
+  for (const season of ['spring', 'winter']) {
+    const css = compose({ ...DEFAULT_OPTIONS, trees: 'bold', petals: true, season }, new Date(2027, 0, 15), '');
+    const kb = Buffer.byteLength(css, 'utf8') / 1024;
+    assert.ok(kb < 88, `${season} stylesheet is ${kb.toFixed(0)} KB, over the 88 KB budget`);
+  }
+});
+
+test('with petals off no falling tile is shipped', () => {
+  // Nothing references them, and they are a third of the stylesheet.
+  const css = compose({ ...DEFAULT_OPTIONS, petals: false });
+  assert.doesNotMatch(css, /--sakura-(petals|snow)-/);
 });
 
 test('no remote url survives into the stylesheet', () => {
@@ -371,9 +387,21 @@ test('every petal layer rule reaches the canvas host too', () => {
   const HOST =
     '.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)';
 
-  const rules = [...CSS.petals.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, selector]) =>
-    selector.split(',').map((one) => one.trim().replace(/\s+/g, ' '))
-  );
+  // The one exception: the body layers fall by transform, so they are one tile
+  // taller than the window and promoted for compositing. The canvas host must
+  // NOT get that geometry, since it would stick out of the canvas box. A rule
+  // that sets only these may name the body layers alone; anything else,
+  // a mask or a colour, still has to reach the host.
+  const BODY_ONLY = /^(--sakura-tile|inset|will-change)$/;
+  const declarations = (body) =>
+    body
+      .split(';')
+      .map((d) => d.split(':')[0].trim())
+      .filter(Boolean);
+
+  const rules = [...CSS.petals.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter(([, , body]) => !declarations(body).every((name) => BODY_ONLY.test(name)))
+    .map(([, selector]) => selector.split(',').map((one) => one.trim().replace(/\s+/g, ' ')));
 
   for (const pseudo of ['::before', '::after']) {
     // Only the rules that style the layer ITSELF, which is the bare body
@@ -528,6 +556,9 @@ test('only our own pseudo-elements are given a stacking context', () => {
       const trap = TRAPS.exec(body);
       if (!trap) continue;
       for (const part of selector.split(',').map((one) => one.trim().replace(/\s+/g, ' '))) {
+        // A keyframe stop is not an element. The fall keyframes animate a
+        // transform, and what they animate is our own pseudo-element.
+        if (/^(from|to|[\d.]+%)$/.test(part)) continue;
         assert.ok(
           part.endsWith('::before') || part.endsWith('::after') || ALLOWED.includes(part),
           `${fragment}: ${trap[1]} on ${part}, a RemNote element, which can trap a popup inside it`
@@ -595,4 +626,46 @@ test('every backdrop-filter carries its webkit prefix', () => {
   const prefixed = (CSS.base.match(/-webkit-backdrop-filter:/g) || []).length;
   assert.equal(plain, prefixed, 'a backdrop-filter is missing its -webkit- pair');
   assert.ok(plain > 0);
+});
+
+test('a swaying layer is held still over the pdf canvas', () => {
+  // The PDF host is sized to the canvas box. Swaying it would bare a strip of
+  // workspace along one edge.
+  assert.match(CSS.petals, /--sakura-petal-sway: 0px;/);
+});
+
+test('nothing in the falling layers animates a property that paints', () => {
+  // Performance rule for this file: the fall is a transform and the wind is a
+  // translate, both moved by the compositor. The body layers must not animate
+  // mask-position, which repaints every frame and snaps to whole pixels (the
+  // shaking snow). Only the PDF fallback keyframes may, and only they.
+  const keyframes = [...CSS.petals.matchAll(/@keyframes ([\w-]+)\s*\{([\s\S]*?)\n\}/g)];
+  for (const [, name, body] of keyframes) {
+    if (name.startsWith('sakura-fall-')) continue;
+    assert.doesNotMatch(body, /mask-position|background-position|top:|left:|width|height/, `${name} animates a painting property`);
+  }
+  assert.match(CSS.petals, /animation:\s*sakura-drop /);
+});
+
+test('the drop lands on a whole tile, and the alt tile divides it', () => {
+  // A transform moves every tile in the layer together, so the loop is only
+  // seamless if one tile of travel is a whole number of the alt tile too.
+  assert.match(CSS.petals, /@keyframes sakura-drop[\s\S]*?translateY\(var\(--sakura-tile\)\)/);
+  const alt = /--sakura-alt: calc\(1 \/ (\d+)\);/.exec(CSS.petals);
+  assert.ok(alt, '--sakura-alt is not written as 1 / n');
+});
+
+test('no backdrop blur behind a surface too opaque to see through', () => {
+  // A backdrop blur is recomputed every frame anything behind it moves, and
+  // the falling layers move behind the queue card for a whole review. At 0.94
+  // opacity and above it cannot be seen, so it is pure cost.
+  for (const [, selector, body] of CSS.base.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const blur = /(?:^|[^-])backdrop-filter:\s*(?!none)([^;]+)/.exec(body);
+    const alpha = /background-color:\s*rgba\([^)]*\),\s*([\d.]+)\)/.exec(body);
+    if (!blur || !alpha) continue;
+    assert.ok(
+      Number(alpha[1]) < 0.94,
+      `${selector.trim().split('\n')[0]} blurs behind a ${alpha[1]} opaque fill, which cannot show`
+    );
+  }
 });

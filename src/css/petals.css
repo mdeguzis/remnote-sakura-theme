@@ -1,17 +1,44 @@
 /*
  * Falling petals. Off by default.
  *
- * Two drifting layers on body's pseudo-elements. Each layer is one tileable
- * petal SVG used as a mask, so the petals take their color from CSS like the
- * branches do.
+ * Two falling layers on body's pseudo-elements. Each layer is tileable SVG used
+ * as a mask, so the petals take their color from CSS like the branches do.
  *
- * The movement is a single background-position animation rather than one
- * element per petal, because a theme cannot create DOM nodes. That turns out to
- * be the better trick anyway: two composited layers instead of forty elements.
+ * Performance comes first here, because this runs for as long as the app is
+ * open, behind someone's reading. The rules that follow from that:
+ *
+ *   The fall is a TRANSFORM. An earlier version animated mask-position, which
+ *   runs on the main thread and repaints the layer every frame with positions
+ *   snapped to whole pixels: a slow layer moving a third of a pixel per frame
+ *   jumped a pixel every third frame and the snow visibly shook. A transform is
+ *   moved by the compositor at sub pixel precision, and nothing repaints. The
+ *   wind is a `translate`, for the same reason. Nothing here animates a
+ *   property that paints.
+ *
+ *   The layer is only as big as it must be. A transform moves the whole
+ *   element, so the element is one tile taller than the window and starts one
+ *   tile above it; each loop drops it exactly one tile, which lands the
+ *   repeating mask back where it began. Nothing is rotated, because a rotated
+ *   layer has to be padded out to cover the corners of the window, and that
+ *   padding is all memory the compositor holds.
+ *
+ *   Two mask images per layer, not more. Each one is rasterised once, but a
+ *   larger layer and more images make that once more expensive.
+ *
+ * The two images are the layer's tile and an alt tile drawn from another seed
+ * at half the size. Half, because a one tile drop has to be a whole number of
+ * every tile in the layer or the loop jumps. One tile repeated in a grid is a
+ * pattern the eye finds in seconds; a second, smaller tile with its own
+ * scatter breaks up the grid.
  *
  * The two layers run at different sizes and speeds, which is what produces the
- * depth. Both drift sideways as they fall, since petals do not drop straight
- * down.
+ * depth, and sway on winds of different periods, the far one played backwards,
+ * so they never move as one. Both fall straight down. Sideways movement comes
+ * from the wind: gusts for petals, a slow calm sway for snow. The wind is chosen
+ * by name through --sakura-petal-wind.
+ *
+ * In winter compose.ts points the same variables at snow, so all of this is
+ * shared.
  *
  * These sit ABOVE the interface at a low z-index with pointer-events: none.
  * Petals passing in front of text is the effect; blocking a click is not, and
@@ -28,13 +55,39 @@ body::after,
 .editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::after {
   content: '';
   position: fixed;
-  inset: -12vh 0 -12vh 0;
   pointer-events: none;
   z-index: 40;
   mask-mode: alpha;
   mask-repeat: repeat;
   -webkit-mask-repeat: repeat;
-  will-change: mask-position, -webkit-mask-position;
+  /*
+   * Tile proportions. These must match the artwork (gen-art.mjs, checked by a
+   * test). Only HEIGHTS have to divide the fall, which is vertical: --sakura-alt
+   * must divide 1, since the loop drops one tile and every tile has to land
+   * whole. Widths are free, and are mismatched on purpose so the layer does
+   * not repeat across the window.
+   */
+  --sakura-alt: calc(1 / 2);
+  --sakura-main-aspect: 1.37;
+  --sakura-alt-aspect: 1.66;
+}
+
+body::before {
+  --sakura-tile: var(--sakura-petal-size-near);
+}
+
+body::after {
+  --sakura-tile: var(--sakura-petal-size-far);
+}
+
+/*
+ * One tile of extra height above the window for the drop, and a 4vw overhang
+ * each side so the widest sway never bares an edge.
+ */
+body::before,
+body::after {
+  inset: calc(-1 * var(--sakura-tile)) -4vw 0 -4vw;
+  will-change: transform, translate;
 }
 
 /* Near layer: larger, faster, more opaque. */
@@ -42,23 +95,41 @@ body::before,
 .editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::before {
   background-color: rgb(var(--sakura-petal));
   opacity: calc(var(--sakura-petal-opacity) * 1);
-  mask-image: var(--sakura-petals-near);
-  -webkit-mask-image: var(--sakura-petals-near);
-  mask-size: var(--sakura-petal-size-near);
-  -webkit-mask-size: var(--sakura-petal-size-near);
-  animation: sakura-fall-near var(--sakura-petal-duration-near) linear infinite;
+  mask-image: var(--sakura-petals-near), var(--sakura-petals-near-alt);
+  -webkit-mask-image: var(--sakura-petals-near), var(--sakura-petals-near-alt);
+  mask-size:
+    calc(var(--sakura-petal-size-near) * var(--sakura-main-aspect)) var(--sakura-petal-size-near),
+    calc(var(--sakura-petal-size-near) * var(--sakura-alt) * var(--sakura-alt-aspect))
+      calc(var(--sakura-petal-size-near) * var(--sakura-alt));
+  -webkit-mask-size:
+    calc(var(--sakura-petal-size-near) * var(--sakura-main-aspect)) var(--sakura-petal-size-near),
+    calc(var(--sakura-petal-size-near) * var(--sakura-alt) * var(--sakura-alt-aspect))
+      calc(var(--sakura-petal-size-near) * var(--sakura-alt));
+  animation:
+    sakura-drop var(--sakura-petal-duration-near) linear infinite,
+    var(--sakura-petal-wind) var(--sakura-petal-wind-near) ease-in-out infinite;
 }
 
-/* Far layer: smaller, slower, fainter, drifting the other way. */
+/* Far layer: smaller, slower, fainter. */
 body::after,
 .editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::after {
   background-color: rgb(var(--sakura-petal));
   opacity: calc(var(--sakura-petal-opacity) * 0.62);
-  mask-image: var(--sakura-petals-far);
-  -webkit-mask-image: var(--sakura-petals-far);
-  mask-size: var(--sakura-petal-size-far);
-  -webkit-mask-size: var(--sakura-petal-size-far);
-  animation: sakura-fall-far var(--sakura-petal-duration-far) linear infinite;
+  mask-image: var(--sakura-petals-far), var(--sakura-petals-far-alt);
+  -webkit-mask-image: var(--sakura-petals-far), var(--sakura-petals-far-alt);
+  mask-size:
+    calc(var(--sakura-petal-size-far) * var(--sakura-main-aspect)) var(--sakura-petal-size-far),
+    calc(var(--sakura-petal-size-far) * var(--sakura-alt) * var(--sakura-alt-aspect))
+      calc(var(--sakura-petal-size-far) * var(--sakura-alt));
+  -webkit-mask-size:
+    calc(var(--sakura-petal-size-far) * var(--sakura-main-aspect)) var(--sakura-petal-size-far),
+    calc(var(--sakura-petal-size-far) * var(--sakura-alt) * var(--sakura-alt-aspect))
+      calc(var(--sakura-petal-size-far) * var(--sakura-alt));
+  /* A different period, a head start and the wind played backwards, so the
+     two layers never sway as one. */
+  animation:
+    sakura-drop var(--sakura-petal-duration-far) linear infinite,
+    var(--sakura-petal-wind) var(--sakura-petal-wind-far) ease-in-out -7s infinite reverse;
 }
 
 /*
@@ -135,43 +206,117 @@ html:has(.drawing-pdf-viewer) body::after {
   position: absolute;
   inset: 0;
   z-index: auto;
+  /* Held to the canvas box: a swaying layer would bare a strip at one edge. */
+  --sakura-petal-sway: 0px;
+  will-change: mask-position, -webkit-mask-position;
 }
 
 /*
- * The loop has to land on a whole number of tiles in BOTH axes.
- *
- * A repeating mask only looks continuous where the animation ends on a multiple
- * of the tile size. The vertical travel was already exactly one tile, but the
- * sideways drift was an arbitrary 14vw, so every cycle the pattern snapped back
- * horizontally and the petals appeared to teleport.
- *
- * Both axes are now expressed in tiles: one across and two down. That keeps the
- * seam invisible and gives a drift of about 27 degrees from vertical, which is
- * closer to how a petal actually falls than a straight drop would be.
- *
- * Anything hard coded here in vw or px reintroduces the jump, which is why a
- * test asserts these offsets are written in terms of the tile size.
+ * Over a PDF the layer cannot be the tall travelling element the body layers
+ * are: it is sized to the canvas box, and anything that sticks out of that box
+ * paints outside the canvas. So here the mask itself moves. It costs a repaint
+ * per frame, which is acceptable only because it is confined to this one
+ * route. The canvas host never sways, which is also why it needs no overhang.
  */
-@keyframes sakura-fall-near {
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::before {
+  animation: sakura-fall-near var(--sakura-petal-duration-near) linear infinite;
+}
+
+.editor-drawing-canvas:has(.drawing-pdf-viewer) div:has(> .drawing-canvas-bounds-display-container)::after {
+  animation: sakura-fall-far var(--sakura-petal-duration-far) linear infinite;
+}
+
+/*
+ * The body layers' fall: one tile straight down. One tile is a whole number of
+ * every tile in the layer (see --sakura-alt), so the end frame matches the
+ * start and the loop has no seam.
+ */
+@keyframes sakura-drop {
   from {
-    mask-position: 0 0;
-    -webkit-mask-position: 0 0;
+    transform: translateY(0);
   }
   to {
-    mask-position: var(--sakura-petal-size-near) calc(var(--sakura-petal-size-near) * 2);
-    -webkit-mask-position: var(--sakura-petal-size-near) calc(var(--sakura-petal-size-near) * 2);
+    transform: translateY(var(--sakura-tile));
   }
 }
 
-/* The far layer drifts the other way, which is what reads as depth. */
-@keyframes sakura-fall-far {
+/*
+ * The PDF layers' fall, which moves the mask instead (see the PDF section).
+ *
+ * A repeating mask only looks continuous where the animation ends on a
+ * multiple of the tile size. A hard coded offset in vw or px snaps the pattern
+ * back at the loop point and the petals visibly teleport, which is what the
+ * first version did, so every offset here is written in tiles and a test
+ * checks it. Straight down, one tile, like the body layers.
+ */
+@keyframes sakura-fall-near {
   from {
-    mask-position: 0 0;
-    -webkit-mask-position: 0 0;
+    mask-position: 0 0, 0 0;
+    -webkit-mask-position: 0 0, 0 0;
   }
   to {
-    mask-position: calc(-1 * var(--sakura-petal-size-far)) calc(var(--sakura-petal-size-far) * 2);
-    -webkit-mask-position: calc(-1 * var(--sakura-petal-size-far)) calc(var(--sakura-petal-size-far) * 2);
+    mask-position: 0 var(--sakura-petal-size-near), 0 var(--sakura-petal-size-near);
+    -webkit-mask-position: 0 var(--sakura-petal-size-near), 0 var(--sakura-petal-size-near);
+  }
+}
+
+@keyframes sakura-fall-far {
+  from {
+    mask-position: 0 0, 0 0;
+    -webkit-mask-position: 0 0, 0 0;
+  }
+  to {
+    mask-position: 0 var(--sakura-petal-size-far), 0 var(--sakura-petal-size-far);
+    -webkit-mask-position: 0 var(--sakura-petal-size-far), 0 var(--sakura-petal-size-far);
+  }
+}
+
+/*
+ * The wind. `translate` rather than `transform`, so it composes with the fall
+ * instead of replacing it, and like the fall it never repaints.
+ */
+@keyframes sakura-sway {
+  /*
+   * Gusts, not a pendulum. Uneven spacing and uneven reach, so no two swings
+   * match; the last stop returns to the first so the loop has no jump. The
+   * multipliers are fractions of --sakura-petal-sway, never above 1, so the
+   * overhang in the layer's inset still covers the widest swing.
+   */
+  0%,
+  100% {
+    translate: calc(-0.3 * var(--sakura-petal-sway)) 0;
+  }
+  17% {
+    translate: calc(0.55 * var(--sakura-petal-sway)) 0;
+  }
+  29% {
+    translate: calc(0.35 * var(--sakura-petal-sway)) 0;
+  }
+  46% {
+    translate: var(--sakura-petal-sway) 0;
+  }
+  61% {
+    translate: calc(-0.15 * var(--sakura-petal-sway)) 0;
+  }
+  78% {
+    translate: calc(-1 * var(--sakura-petal-sway)) 0;
+  }
+  90% {
+    translate: calc(-0.6 * var(--sakura-petal-sway)) 0;
+  }
+}
+
+/*
+ * The calm wind, for snow. One smooth swing each way: snow settles, it is not
+ * thrown about.
+ */
+@keyframes sakura-sway-calm {
+  0%,
+  100% {
+    translate: calc(-1 * var(--sakura-petal-sway)) 0;
+  }
+  50% {
+    translate: var(--sakura-petal-sway) 0;
   }
 }
 

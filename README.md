@@ -35,6 +35,7 @@ Settings, Plugins, Sakura.
 | Falling petals | On, Off | **Off** |
 | Petal density | Sparse, Gentle, Heavy | Gentle |
 | Petal speed | Slow, Drifting, Brisk | Drifting |
+| Season | Automatic, Northern hemisphere, Southern hemisphere, Always spring, Always winter | Automatic |
 
 Tint strength is there for anyone who finds the palettes too pale. 100 is each shade as designed; higher deepens the ground, lower washes it toward neutral. Text colour does not move with it, so the range is capped at 200, which is where the contrast floor still holds on every shade.
 
@@ -43,6 +44,8 @@ Panel opacity controls how solid the inset surfaces are: code blocks, the editor
 At 0 the panel disappears and content sits directly on the scenery. At 100 it is solid and hides the artwork behind it. In between is a frosted panel, which is where the default sits. Lower it to see more of the branches and the shop, raise it for flatter and easier reading.
 
 Petals are off by default. Continuous motion behind text is charming for a day and irritating by the third, so you opt in. If your system asks for reduced motion the petals stay visible but stop moving, even when you have turned them on.
+
+Season decides whether the petals fall as petals or as snow. On Automatic it snows during your local winter (December to February in the north, June to August in the south), and it guesses your hemisphere from your time zone. If the guess is wrong, pick a hemisphere yourself, or pin the setting to Always spring or Always winter. Snow takes the place of the petals instead of adding a second layer, so it only falls when Falling petals is on.
 
 ## How the branches work
 

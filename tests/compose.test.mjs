@@ -169,6 +169,7 @@ test('normalizeOptions keeps valid values untouched', () => {
     petals: true,
     petalDensity: 'heavy',
     petalSpeed: 'brisk',
+    season: 'southern',
     tintStrength: 140,
   };
   assert.deepEqual(normalizeOptions(input), input);
@@ -219,6 +220,15 @@ test('the blur is tied to the fill', () => {
   // soft inside, which is the same discontinuity in another form.
   assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 0 }), /--sakura-code-blur: none/);
   assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 80 }), /--sakura-code-blur: blur\(/);
+});
+
+test('a code panel too solid to see through is not blurred', () => {
+  // The blur is recomputed on every scroll frame and cannot be seen through a
+  // nearly solid panel. The default must still blur.
+  assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 89 }), /--sakura-code-blur: blur\(/);
+  assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 90 }), /--sakura-code-blur: none/);
+  assert.match(compose({ ...DEFAULT_OPTIONS, codeOpacity: 100 }), /--sakura-code-blur: none/);
+  assert.match(compose(DEFAULT_OPTIONS), /--sakura-code-blur: blur\(/);
 });
 
 test('the extremes of the code opacity setting both work', () => {

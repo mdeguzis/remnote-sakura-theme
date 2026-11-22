@@ -3,6 +3,36 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-22
+
+### Added
+
+- The petals turn to snow in winter. A new Season setting follows the winter
+  months for your hemisphere, which it guesses from your time zone, or you can
+  pin it to always spring or always winter. The flakes are small and soft and
+  drift straight down on a calm wind. Their sizes come from the two most used
+  snowfall libraries, after a first attempt sized by eye looked like bubbles.
+
+### Changed
+
+- The falling layers move by transform now, not by mask position. Moving the
+  mask made the browser repaint the layer on the main thread every frame and
+  snap it to whole pixels, so a slow layer stepped one pixel at a time and
+  looked shaky. The compositor moves a transform smoothly and the layer never
+  repaints.
+- The pieces are spread evenly over seamless tiles, and each layer stacks two
+  tiles whose widths never line up, so the fall no longer shows a grid. Petals
+  fall straight down now and get their sideways movement from gusts.
+- Menus, dialogs, the omnibar, settings and the flashcard lost their backdrop
+  blur. At 94 to 97 percent opacity you could not see it, and behind the
+  flashcard the browser recomputed it on every frame of a review. Code panels
+  at 90 percent opacity or higher skip the blur for the same reason.
+
+### Fixed
+
+- With falling petals off, the stylesheet no longer carries the petal artwork,
+  which makes it about 30% smaller.
+
 ## [1.2.6] - 2026-10-04
 
 ### Fixed

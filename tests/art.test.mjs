@@ -19,10 +19,16 @@ test('the expected artwork exists', () => {
     'branch-top-left-wood.svg',
     'branch-top-right-blossoms.svg',
     'branch-top-right-wood.svg',
+    'petals-far-alt.svg',
     'petals-far.svg',
+    'petals-near-alt.svg',
     'petals-near.svg',
     'scenery-shop-lights.svg',
     'scenery-shop-structure.svg',
+    'snow-far-alt.svg',
+    'snow-far.svg',
+    'snow-near-alt.svg',
+    'snow-near.svg',
   ];
   assert.deepEqual(files.slice().sort(), expected);
 });
@@ -106,4 +112,30 @@ test('generating the art twice produces identical files', async () => {
   await import('../scripts/gen-art.mjs?rerun=' + Date.now());
   const after = files.map((file) => fs.readFileSync(path.join(ASSET_DIR, file), 'utf8'));
   assert.deepEqual(after, before, 'art generation is not deterministic');
+});
+
+test('falling tiles are drawn in the proportions petals.css gives them', () => {
+  // The generator and the stylesheet both state the tile shapes. If they
+  // disagree every piece is stretched, and if the alt height stops dividing the
+  // main one the fall loop jumps. Both are silent in the browser.
+  const css = fs.readFileSync(path.join(ROOT, 'src', 'css', 'petals.css'), 'utf8');
+  const cssNumber = (name) => {
+    const m = new RegExp(`--sakura-${name}: (?:calc\\((\\d+) / (\\d+)\\)|([\\d.]+));`).exec(css);
+    assert.ok(m, `--sakura-${name} is not declared`);
+    return m[3] ? Number(m[3]) : Number(m[1]) / Number(m[2]);
+  };
+  const box = (file) => {
+    const [, w, h] = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(fs.readFileSync(path.join(ASSET_DIR, file), 'utf8'));
+    return { w: Number(w), h: Number(h) };
+  };
+
+  const alt = cssNumber('alt');
+  assert.ok(Number.isInteger(1 / alt), `--sakura-alt ${alt} does not divide one tile`);
+
+  for (const name of ['petals-near', 'petals-far', 'snow-near', 'snow-far']) {
+    const main = box(`${name}.svg`);
+    const altBox = box(`${name}-alt.svg`);
+    assert.ok(Math.abs(main.w / main.h - cssNumber('main-aspect')) < 0.01, `${name} main tile aspect`);
+    assert.ok(Math.abs(altBox.w / altBox.h - cssNumber('alt-aspect')) < 0.01, `${name} alt tile aspect`);
+  }
 });

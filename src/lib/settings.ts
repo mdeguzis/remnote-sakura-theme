@@ -2,6 +2,7 @@ import type { RNPlugin } from '@remnote/plugin-sdk';
 
 import { compose } from './compose.ts';
 import { normalizeOptions, type PetalDensity, type PetalSpeed, type SakuraOptions, type TreeMode } from './options.ts';
+import { currentTimeZone, isSnowSeason, resolveHemisphere, type Season } from './season.ts';
 
 /**
  * Setting ids.
@@ -20,6 +21,7 @@ export const SETTINGS = {
   petals: 'petals',
   petalDensity: 'petal-density',
   petalSpeed: 'petal-speed',
+  season: 'season',
   tintStrength: 'tint-strength',
 } as const;
 
@@ -39,6 +41,7 @@ export async function readOptions(plugin: RNPlugin): Promise<SakuraOptions> {
     petals: await plugin.settings.getSetting<boolean>(SETTINGS.petals),
     petalDensity: await plugin.settings.getSetting<PetalDensity>(SETTINGS.petalDensity),
     petalSpeed: await plugin.settings.getSetting<PetalSpeed>(SETTINGS.petalSpeed),
+    season: await plugin.settings.getSetting<Season>(SETTINGS.season),
     tintStrength: await plugin.settings.getSetting<number>(SETTINGS.tintStrength),
   });
 }
@@ -51,7 +54,10 @@ export async function readOptions(plugin: RNPlugin): Promise<SakuraOptions> {
  * actually live, and only showing the options hides exactly that.
  */
 export function buildDebugReport(options: SakuraOptions): string {
-  const css = compose(options);
+  const now = new Date();
+  const timeZone = currentTimeZone();
+  const css = compose(options, now, timeZone);
+  const snowing = options.petals && isSnowSeason(options.season, now, timeZone);
 
   const codeVars = (css.match(/--sakura-code-[\w-]+: [^;]+;/g) || []).map((line) => `  ${line}`).join('\n');
   const layerVars = (css.match(/--sakura-(?:tree|petal)-[\w-]+: [^;]+;/g) || [])
@@ -70,6 +76,8 @@ export function buildDebugReport(options: SakuraOptions): string {
     `options:      ${JSON.stringify(options)}`,
     `css bytes:    ${css.length}`,
     `emitted:      ${emitted.join(', ') || 'none'}`,
+    `season:       ${snowing ? 'snow' : 'petals'} (setting ${options.season}, ` +
+      `hemisphere ${resolveHemisphere(options.season, timeZone) ?? 'n/a'}, zone ${timeZone || 'unknown'}, month ${now.getMonth() + 1})`,
     '',
     'code block variables:',
     codeVars || '  (none emitted)',

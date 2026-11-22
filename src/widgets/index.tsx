@@ -3,6 +3,7 @@ import { declareIndexPlugin, ReactRNPlugin, WidgetLocation } from '@remnote/plug
 import { compose } from '../lib/compose.ts';
 import { SHADES } from '../lib/palettes.ts';
 import { SETTINGS, readOptions } from '../lib/settings.ts';
+import { SEASONS, currentTimeZone, isSnowSeason, type Season } from '../lib/season.ts';
 import {
   DEFAULT_OPTIONS,
   PETAL_DENSITIES,
@@ -37,6 +38,23 @@ const SPEED_LABELS: Record<PetalSpeed, string> = {
   drifting: 'Drifting',
   brisk: 'Brisk',
 };
+
+const SEASON_LABELS: Record<Season, string> = {
+  auto: 'Automatic, from your time zone',
+  northern: 'Automatic, northern hemisphere (snow December to February)',
+  southern: 'Automatic, southern hemisphere (snow June to August)',
+  spring: 'Always spring, petals all year',
+  winter: 'Always winter, snow all year',
+};
+
+/**
+ * How often to check whether the season has turned.
+ *
+ * The tracker only re-runs on a settings change, so an app left open across
+ * the first of December would keep its petals until the next restart.
+ */
+const SEASON_CHECK_MS = 60 * 60 * 1000;
+let seasonTimer: ReturnType<typeof setInterval> | undefined;
 
 async function onActivate(plugin: ReactRNPlugin) {
   try {
@@ -121,13 +139,27 @@ async function registerEverything(plugin: ReactRNPlugin) {
     options: PETAL_SPEEDS.map((speed) => ({ key: speed, label: SPEED_LABELS[speed], value: speed })),
   });
 
+  await plugin.settings.registerDropdownSetting({
+    id: SETTINGS.season,
+    title: 'Season',
+    description:
+      'Petals fall as snow in winter. Automatic follows the winter months where you are, guessing the hemisphere from your time zone, or you can pin one season for good. Only applies when falling petals are on.',
+    defaultValue: DEFAULT_OPTIONS.season,
+    options: SEASONS.map((season) => ({ key: season, label: SEASON_LABELS[season], value: season })),
+  });
+
+  let lastSnowing = false;
+
   // Re-runs whenever any of these settings changes, which is what makes the
   // dropdowns feel live rather than needing a reload.
   plugin.track(async (reactivePlugin) => {
     const options = await readOptions(reactivePlugin as ReactRNPlugin);
 
-    const css = compose(options);
+    const now = new Date();
+    const timeZone = currentTimeZone();
+    const css = compose(options, now, timeZone);
     await reactivePlugin.app.registerCSS(CSS_KEY, css);
+    lastSnowing = options.petals && isSnowSeason(options.season, now, timeZone);
 
     console.debug(`${LOG_PREFIX} applied stylesheet`, {
       shade: options.shade,
@@ -137,11 +169,32 @@ async function registerEverything(plugin: ReactRNPlugin) {
       petals: options.petals,
       petalDensity: options.petalDensity,
       petalSpeed: options.petalSpeed,
+      season: options.season,
+      snowing: lastSnowing,
+      timeZone,
       cssBytes: css.length,
       source: 'settings.getSetting',
       cssKey: CSS_KEY,
     });
   });
+
+  // Only re-register when the season actually flipped, so an hourly tick
+  // costs one settings read and nothing else on every other hour of the year.
+  if (seasonTimer) clearInterval(seasonTimer);
+  seasonTimer = setInterval(async () => {
+    try {
+      const options = await readOptions(plugin);
+      const now = new Date();
+      const timeZone = currentTimeZone();
+      const snowing = options.petals && isSnowSeason(options.season, now, timeZone);
+      if (snowing === lastSnowing) return;
+      await plugin.app.registerCSS(CSS_KEY, compose(options, now, timeZone));
+      console.info(`${LOG_PREFIX} season turned`, { snowing, was: lastSnowing, season: options.season, timeZone, month: now.getMonth() + 1 });
+      lastSnowing = snowing;
+    } catch (error) {
+      console.error(`${LOG_PREFIX} season check failed`, { error, source: 'seasonTimer' });
+    }
+  }, SEASON_CHECK_MS);
 
   await plugin.app.registerWidget('debug_report', WidgetLocation.Popup, {
     dimensions: { height: 'auto', width: 560 },
@@ -169,7 +222,7 @@ async function registerEverything(plugin: ReactRNPlugin) {
       const options = await readOptions(plugin);
       const summary =
         `shade ${options.shade} | branches ${options.trees} | shop ${options.scenery ? 'on' : 'off'} | ` +
-        `code ${options.codeOpacity} | petals ${options.petals ? options.petalDensity : 'off'}`;
+        `code ${options.codeOpacity} | petals ${options.petals ? options.petalDensity : 'off'} | season ${options.season}`;
       await plugin.app.toast(summary);
       console.debug(`${LOG_PREFIX} current settings`, options);
     },
@@ -202,6 +255,8 @@ async function registerEverything(plugin: ReactRNPlugin) {
  * reads as a broken app rather than a disabled plugin.
  */
 async function onDeactivate(plugin: ReactRNPlugin) {
+  if (seasonTimer) clearInterval(seasonTimer);
+  seasonTimer = undefined;
   await plugin.app.registerCSS(CSS_KEY, '');
   console.debug(`${LOG_PREFIX} deactivated, cleared css`, { cssKey: CSS_KEY });
 }

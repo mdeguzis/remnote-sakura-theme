@@ -116,7 +116,16 @@ html {
   background-color: rgba(var(--sakura-surface), 0.78);
 }
 
-/* Floating. Kept close to opaque: legibility beats the effect here. */
+/*
+ * Floating. Kept close to opaque: legibility beats the effect here.
+ *
+ * No backdrop blur on this or on any surface at 0.94 opacity and above. Only
+ * 3 to 6% of what is behind shows through, so a blur there cannot be seen, and
+ * it is never free: the blurred backdrop is recomputed every frame that
+ * anything behind it moves, which on the queue is every frame of the falling
+ * layers for the whole review. The blur stays where it shows: the sidebars,
+ * code blocks and the dialog scrim.
+ */
 .rn-clr-background-elevation-5,
 .rn-clr-background-elevation-10,
 .rn-clr-background-elevation-15,
@@ -135,8 +144,6 @@ html {
    * colour, and a gradient is a background IMAGE. Setting only the colour left
    * that opaque grey image on top of it, so the surface never changed. */
   background-image: none;
-  backdrop-filter: blur(10px) saturate(120%);
-  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 
 .rn-clr-background-accent {
@@ -265,9 +272,6 @@ html {
 .rn-sidebar [data-selected='true'] {
   background-color: rgba(var(--sakura-accent), 0.26);
   background-image: none;
-  /* The sidebar already blurs. Blurring the row again muddies the branch. */
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 .rn-sidebar a:hover,
@@ -295,15 +299,13 @@ html {
 }
 
 /* Dialogs, menus and the omnibar sit over everything, so they get the most
- * opacity and the strongest blur. */
+ * opacity. No blur: at 0.96 it cannot be seen (see the floating surfaces). */
 .rn-dialog,
 .rn-doc-menu,
 .rn-omnibar,
 .rn-settings,
 .rn-floating-toolbar {
   background-color: rgba(var(--sakura-elevated), 0.96);
-  backdrop-filter: blur(14px) saturate(125%);
-  -webkit-backdrop-filter: blur(14px) saturate(125%);
   border-radius: 14px;
   box-shadow: 0 12px 40px rgba(var(--sakura-wood), 0.16);
 }
@@ -398,8 +400,8 @@ html:has(.rn-queue-container) .rn-content-and-right-sidebar {
 .rn-queue {
   background-color: rgba(var(--sakura-elevated), 0.97);
   background-image: none;
-  backdrop-filter: blur(12px) saturate(120%);
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  /* No blur: the falling layers drop behind this card on the queue, so a blur
+   * here was recomputed every frame of a review, and at 0.97 it cannot be seen. */
   border: 1px solid rgba(var(--sakura-border), 0.9);
   box-shadow: 0 18px 48px rgba(var(--sakura-wood), 0.22);
 }
