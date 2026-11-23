@@ -66,3 +66,13 @@ test('the checked in manifest carries the real id, not a dev one', () => {
   assert.doesNotMatch(manifest.id, /-dev$/, `manifest id is "${manifest.id}"`);
   assert.doesNotMatch(manifest.name, /\(dev\)/, `manifest name is "${manifest.name}"`);
 });
+
+test('the plugin asks for no more than its own powerup', () => {
+  // Issue #16. The plugin only needs SOME scope at Read for RemNote to deliver
+  // settings changes, and its own powerup is the narrowest one there is: it is
+  // never created, so it grants no rems. `All` was copied from other theme
+  // plugins once and read the whole knowledge base for nothing.
+  const scopes = read('public/manifest.json').requiredScopes;
+  assert.deepEqual(scopes, [{ type: 'Powerup', powerupCode: 'sakura', level: 'Read' }]);
+  assert.deepEqual(read('manifest.json').requiredScopes, [], 'the theme zip has no code and needs no scope');
+});

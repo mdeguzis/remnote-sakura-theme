@@ -6,19 +6,29 @@ Open a [security advisory](https://github.com/mdeguzis/remnote-sakura-theme/secu
 
 ## What the plugin asks for
 
-`manifest.json` requests `All` at `Read`. That is broader than this theme needs, and it is worth being plain about: it permits reading knowledge base content, and you are taking it on trust that the plugin does not.
+One scope: the plugin's own `sakura` powerup, at `Read`. That covers the powerup and any rem tagged with it, and the plugin never creates or applies that powerup, so in practice it can read no rems at all.
 
-It is requested because the reactive event stream that tells the plugin a setting changed is gated behind holding a Read scope. Declaring nothing produces `attempted to perform 'events.addListener', but no scope has permission level of at least 'Read'`, and settings changes never reach the stylesheet. `All` / `Read` is what the RemNote theme plugins already in the marketplace use, so it is the combination known to work.
+It asks for anything only because RemNote gates the event that tells a plugin a setting changed behind holding some scope at `Read` level. With no scope at all, the console shows `attempted to perform 'events.addListener', but no scope has permission level of at least 'Read'` and changing a setting stops updating the theme. The check looks at the level, not at how much the scope covers, so the narrowest scope there is satisfies it.
+
+Up to 1.3.0 the plugin asked for `All` at `Read`, which permits reading every rem in the knowledge base. That was copied from the theme plugins already in the marketplace on the belief that the settings listener needed it. It did not, as [#16](https://github.com/mdeguzis/remnote-sakura-theme/issues/16) pointed out. 1.3.1 drops it.
+
+The theme zip (`SakuraTheme.zip`) has no JavaScript and asks for nothing.
 
 ## What it does with it
 
-Nothing. The entire runtime is `src/widgets/index.tsx`: it registers six settings, reads them, passes them to `compose()`, and calls `plugin.app.registerCSS`. It never calls a `rem`, `search`, `queue` or `knowledge_base` method.
+Nothing. The runtime is `src/widgets/index.tsx`: it registers nine settings, reads them, passes them to `compose()`, and calls `plugin.app.registerCSS`. It never calls a `rem`, `search`, `queue` or `knowledge_base` method.
 
 - No network requests at runtime. Every colour and every piece of artwork is compiled into the bundle, so nothing is fetched while you use it and it works offline.
 - No stored data beyond the settings RemNote itself persists.
 - `compose()` is a pure function from options to a string, with no I/O.
 
-The source is small enough to check rather than trust. `src/widgets/index.tsx` is under 200 lines and `src/lib/compose.ts` is under 150.
+It reads three things from your machine, and none of them leaves it:
+
+- Your system time zone (`Intl.DateTimeFormat`), to decide which hemisphere's winter brings snow when Season is on Automatic. It is matched against a list in `src/lib/season.ts` and used for nothing else.
+- Your browser's user agent, which only appears in the debug report, and only when you open that report yourself.
+- The clipboard, written to only when you press copy in the debug report.
+
+The source is small enough to check rather than trust. The plugin is `src/widgets/index.tsx`, `src/lib/compose.ts` and `src/lib/season.ts`, about 650 lines between them.
 
 ## Why the CSS itself is safe to run
 

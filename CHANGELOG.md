@@ -3,6 +3,16 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-11-22
+
+### Security
+
+- The plugin no longer asks to read your whole knowledge base. It asked for
+  `All` at `Read` on the belief that the settings listener needed it, and it
+  does not: RemNote only checks that some scope has `Read`. The plugin now asks
+  for its own `sakura` powerup, which it never creates, so it can read no rems
+  at all. Thanks to l6889l for raising it in #16.
+
 ## [1.3.0] - 2026-11-22
 
 ### Added
