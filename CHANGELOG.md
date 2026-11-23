@@ -3,6 +3,20 @@
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-11-22
+
+### Security
+
+- Patched dependencies of the local dev server (body-parser, compression,
+  launch-editor, proxy-addr and shell-quote) for two critical and three high
+  advisories. The dev server only runs on your machine during development and
+  none of these ship in either zip.
+- zod, which the RemNote plugin SDK bundles, has a high advisory with no fix the
+  SDK can take: the patch is in zod 4 and the latest SDK depends on zod 3. It is
+  accepted in `security/audit-exceptions.json` with a review date of
+  2026-12-22. Inside the plugin zod only checks messages between the SDK and
+  RemNote, never input from anyone else.
+
 ## [1.3.1] - 2026-11-22
 
 ### Security
