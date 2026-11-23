@@ -527,10 +527,24 @@ div:has(> .drawing-page-page-number) {
 }
 
 /* The canvas draws its own scrollbar instead of using the browser's, so the
- * scrollbar rules further down never reach it. */
+ * scrollbar rules further down never reach it.
+ *
+ * The class sits on the TRACK; the handle is its child. Filling the track drew
+ * a wide pale slab down the side of every PDF, so the track stays clear and
+ * only the handle is painted, as a pill matching the browser scrollbars below.
+ * Structure read from a screenshot (pale box with a thin bar inside), not the
+ * DOM: if the scrollbar vanishes, the class is on the handle instead. */
 .rn-drawing-canvas-fake-scrollbar,
 .dark .rn-drawing-canvas-fake-scrollbar {
-  background-color: rgba(var(--sakura-text-muted), 0.35);
+  background-color: transparent;
+}
+.rn-drawing-canvas-fake-scrollbar > * {
+  background-color: rgba(var(--sakura-text-muted), 0.3);
+  border-radius: 999px;
+  transition: background-color 120ms ease;
+}
+.rn-drawing-canvas-fake-scrollbar:hover > * {
+  background-color: rgba(var(--sakura-accent), 0.45);
 }
 
 /*
